@@ -3,322 +3,857 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Fiocruz Minas Transparente - Orçamento</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Painel Fiocruz Minas — Orçamento Transparente</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* ===== TOKENS ===== */
         :root {
-            --bg-principal: #0a192f;
-            --bg-cards: #112240;
-            --azul-destaque: #00b4d8;
-            --azul-claro: #0077b6;
-            --texto-claro: #f8f9fa;
-            --texto-mutado: #8892b0;
-            --borda: #233554;
+            --bg:       #050e1d;
+            --surface:  #0b1c35;
+            --card:     #0f2444;
+            --border:   #1a3456;
+            --accent:   #00c2e0;
+            --accent2:  #0077b6;
+            --gold:     #f0a500;
+            --text:     #e8edf5;
+            --muted:    #6a82a4;
+            --green:    #22c55e;
+            --radius:   8px;
+            --shadow:   0 4px 24px rgba(0,0,0,.5);
         }
 
+        /* ===== RESET ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-principal);
-            color: var(--texto-claro);
-            margin: 0;
-            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
 
-        /* Banner Superior - Foco total na sua imagem de capa */
-        .header-banner {
-            background: url('imagem/capa.png') no-repeat center center;
-            background-size: contain; /* Ajusta a imagem inteira sem cortar */
+        /* ===== BANNER ===== */
+        .banner {
             width: 100%;
-            height: 250px; /* Altura ideal baseada na proporção do banner */
-            border-bottom: 3px solid var(--azul-claro);
+            height: 220px;
+            background: url('imagem/capa.png') no-repeat center center / contain, var(--surface);
+            border-bottom: 3px solid var(--accent2);
+            position: relative;
+        }
+        .banner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
         }
 
-        /* Barra de Status e Navegação abaixo da capa */
-        .status-bar {
+        /* ===== TOPBAR ===== */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 5%;
-            background-color: rgba(2, 12, 27, 0.8);
-            border-bottom: 1px solid var(--borda);
+            background: rgba(5,14,29,.92);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(6px);
         }
-
-        #data-atualizacao { 
-            background: rgba(0, 119, 182, 0.2); 
-            padding: 6px 15px; 
-            border-radius: 20px; 
-            border: 1px solid var(--azul-claro); 
+        .topbar-title {
             font-size: 13px;
-            color: var(--azul-destaque);
+            font-weight: 600;
+            letter-spacing: .04em;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        #sync-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: var(--accent);
+            background: rgba(0,194,224,.08);
+            border: 1px solid rgba(0,194,224,.25);
+            padding: 5px 14px;
+            border-radius: 20px;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 5%;
+            background: rgba(11,28,53,.6);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab {
+            background: none;
+            color: var(--muted);
+            border: 1px solid transparent;
+            padding: 9px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all .25s;
+        }
+        .tab:hover   { color: var(--accent); background: var(--card); border-color: var(--border); }
+        .tab.active  { color: var(--accent); background: var(--card); border-color: var(--accent); }
+
+        /* ===== CONTENT PANELS ===== */
+        .panel { display: none; padding: 32px 5% 48px; }
+        .panel.active { display: block; }
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 24px;
+            letter-spacing: .02em;
         }
 
-        .nav-tabs { display: flex; justify-content: flex-start; gap: 10px; padding: 15px 5%; background-color: rgba(17, 34, 64, 0.5); border-bottom: 1px solid var(--borda); }
-        .tab-btn { background-color: transparent; color: var(--texto-mutado); border: 1px solid transparent; padding: 10px 20px; cursor: pointer; font-size: 15px; font-weight: 600; border-radius: 4px; transition: all 0.3s ease; }
-        .tab-btn.active, .tab-btn:hover { color: var(--azul-destaque); background-color: var(--bg-cards); border-color: var(--borda); }
+        /* ===== KPI GRID ===== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 180px repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+        .kpi-col-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--muted);
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .kpi-row-label {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .kpi-row-label.total { color: var(--accent); }
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 10px;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            transition: border-color .2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--border);
+        }
+        .kpi-card.liberado::before { background: var(--accent2); }
+        .kpi-card.empenhado::before { background: var(--gold); }
+        .kpi-card.liquidado::before { background: var(--green); }
+        .kpi-card.total-row {
+            background: linear-gradient(135deg, #0f2444, #162e52);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-size: 16px;
+        }
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
 
-        .tab-content { display: none; padding: 30px 5%; }
-        .tab-content.active { display: block; }
+        /* ===== CHARTS ===== */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 20px 16px;
+            box-shadow: var(--shadow);
+        }
+        .chart-card h4 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+        .chart-card canvas { max-height: 280px; }
 
-        .grid-indicadores { display: grid; grid-template-columns: 160px repeat(3, 1fr); gap: 15px; margin-bottom: 35px; }
-        .grid-header { text-align: center; font-size: 16px; font-weight: 600; color: var(--azul-destaque); padding-bottom: 5px; }
-        .col-titulo { font-size: 18px; font-weight: 600; display: flex; align-items: center; }
-        .card-valor { background-color: var(--bg-cards); border: 1px solid var(--borda); padding: 20px; border-radius: 6px; text-align: center; font-size: 20px; font-weight: 700; }
-        .card-total { border-color: var(--azul-destaque); background: linear-gradient(145deg, #112240, #172a45); }
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .table-toolbar span { font-size: 12px; color: var(--muted); }
+        .search-input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: var(--text);
+            font-size: 13px;
+            width: 220px;
+            transition: border-color .2s;
+        }
+        .search-input:focus { outline: none; border-color: var(--accent); }
+        .search-input::placeholder { color: var(--muted); }
+        .table-scroll { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(5,14,29,.95);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 11px 14px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+        thead th:hover { color: #fff; }
+        thead th .sort-icon { margin-left: 4px; opacity: .4; }
+        thead th.sorted .sort-icon { opacity: 1; color: var(--gold); }
+        tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tbody tr:hover { background: rgba(0,194,224,.04); }
+        tbody tr:last-child td { border-bottom: none; }
+        .num-cell { text-align: right; font-variant-numeric: tabular-nums; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(0,194,224,.12);
+            color: var(--accent);
+        }
 
-        .container-tabela { overflow-x: auto; background-color: var(--bg-cards); border: 1px solid var(--borda); border-radius: 8px; margin-top: 20px; max-height: 500px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { background-color: rgba(2, 12, 27, 0.7); color: var(--azul-destaque); padding: 12px 15px; border-bottom: 2px solid var(--borda); position: sticky; top: 0; }
-        td { padding: 10px 15px; border-bottom: 1px solid var(--borda); }
-        tr:hover { background-color: rgba(100, 255, 218, 0.03); }
-        .chart-wrapper { background-color: var(--bg-cards); border: 1px solid var(--borda); padding: 20px; border-radius: 8px; margin-top: 25px; }
+        /* ===== LOADING ===== */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 60px 20px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #f87171;
+            font-size: 14px;
+        }
+
+        /* ===== YEAR FILTER ===== */
+        .year-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .year-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .year-btn.active, .year-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: 110px repeat(3,1fr); }
+            .charts-row { grid-template-columns: 1fr; }
+            .kpi-card { font-size: 13px; padding: 12px 6px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header-banner"></div>
+<!-- BANNER -->
+<div class="banner"></div>
 
-    <div class="status-bar">
-        <span style="color: var(--texto-mutado); font-size: 14px; font-weight: 500;">Painel de Controle Orçamentário</span>
-        <div id="data-atualizacao">Conectando ao Google Drive...</div>
+<!-- TOPBAR -->
+<div class="topbar">
+    <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
+    <div id="sync-badge"><span class="dot"></span> <span id="sync-text">Carregando dados…</span></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
+    <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
+    <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
+</div>
+
+<!-- PANEL 1: VISÃO GERAL -->
+<div id="visao" class="panel active">
+    <div class="panel-title">Execução Orçamentária Corrente</div>
+
+    <div class="kpi-grid">
+        <!-- headers -->
+        <div></div>
+        <div class="kpi-col-header">Dot. Atualizada<br>(Liberado)</div>
+        <div class="kpi-col-header">Despesas<br>Empenhadas</div>
+        <div class="kpi-col-header">Despesas<br>Liquidadas</div>
+        <!-- Custeio -->
+        <div class="kpi-row-label">Custeio</div>
+        <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
+        <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
+        <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
+        <!-- Capital -->
+        <div class="kpi-row-label">Capital</div>
+        <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cap-lib">–</div></div>
+        <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cap-emp">–</div></div>
+        <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cap-liq">–</div></div>
+        <!-- Total -->
+        <div class="kpi-row-label total">Total Geral</div>
+        <div class="kpi-card total-row liberado"><div class="kpi-label">Liberado</div><div id="tot-lib">–</div></div>
+        <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="tot-emp">–</div></div>
+        <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="tot-liq">–</div></div>
     </div>
 
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="alterarAba(event, 'visao-geral')">Plano Anual / Visão Geral / LOA IRR</button>
-        <button class="tab-btn" onclick="alterarAba(event, 'detalhamento')">Plano Anual - Detalhamento</button>
-        <button class="tab-btn" onclick="alterarAba(event, 'aporte-indireto')">Aporte Indireto à Pesquisa</button>
-    </div>
-
-    <div id="visao-geral" class="tab-content active">
-        <h3 style="color: var(--azul-destaque); margin-top: 0;">Execução Orçamentária Corrente</h3>
-        <div class="grid-indicadores">
-            <div></div>
-            <div class="grid-header">Dot. Atualizada (Liberado)</div>
-            <div class="grid-header">Despesas Empenhadas</div>
-            <div class="grid-header">Despesas Liquidadas</div>
-
-            <div class="col-titulo">Custeio</div>
-            <div class="card-valor" id="cust-lib">R$ 0,00</div>
-            <div class="card-valor" id="cust-emp">R$ 0,00</div>
-            <div class="card-valor" id="cust-liq">R$ 0,00</div>
-
-            <div class="col-titulo">Capital</div>
-            <div class="card-valor" id="vcap-lib">R$ 0,00</div>
-            <div class="card-valor" id="vcap-emp">R$ 0,00</div>
-            <div class="card-valor" id="vcap-liq">R$ 0,00</div>
-
-            <div class="col-titulo" style="color: var(--azul-destaque);">Total Geral</div>
-            <div class="card-valor card-total" id="tot-lib" style="color: var(--azul-destaque);">R$ 0,00</div>
-            <div class="card-valor card-total" id="tot-emp" style="color: var(--azul-destaque);">R$ 0,00</div>
-            <div class="card-valor card-total" id="tot-liq" style="color: var(--azul-destaque);">R$ 0,00</div>
+    <div class="charts-row">
+        <div class="chart-card">
+            <h4>Evolução Histórica — Orçamento Liberado (Custeio + Capital)</h4>
+            <canvas id="chart-historico"></canvas>
         </div>
-
-        <div class="chart-wrapper">
-            <h4 style="margin: 0 0 15px 0;">Evolução Histórica: Orçamento Liberado</h4>
-            <canvas id="historicoChart" style="max-height: 320px;"></canvas>
+        <div class="chart-card">
+            <h4>Composição do Ano Corrente</h4>
+            <canvas id="chart-pizza"></canvas>
         </div>
     </div>
+</div>
 
-    <div id="detalhamento" class="tab-content">
-        <h3 style="color: var(--azul-destaque); margin-top: 0;">Detalhamento Analítico (proposta_1)</h3>
-        <div class="container-tabela">
-            <table id="tabela-proposta">
+<!-- PANEL 2: DETALHAMENTO -->
+<div id="detalhamento" class="panel">
+    <div class="panel-title">Detalhamento Analítico — proposta_1</div>
+    <div id="loader-det" class="loader"><div class="spinner"></div> Carregando detalhamento…</div>
+    <div id="table-det-wrap" class="table-wrap" style="display:none">
+        <div class="table-toolbar">
+            <span id="count-det">— registros</span>
+            <input class="search-input" id="search-det" placeholder="🔍 Filtrar por qualquer campo…" oninput="filtrarTabela('det')">
+        </div>
+        <div class="table-scroll">
+            <table id="tabela-det">
                 <thead>
                     <tr>
-                        <th>Setor Responsável</th>
-                        <th>Grupos</th>
-                        <th>Sub-grupo</th>
-                        <th>Detalhamento</th>
-                        <th>Despesa</th>
-                        <th>Previsto</th>
-                        <th>Empenhado</th>
-                        <th>Liquidado</th>
+                        <th onclick="ordenarTabela('det',0)">Setor Responsável <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',1)">Grupos <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',2)">Sub-grupo <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',3)">Detalhamento <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',4)">Despesa <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',5)">Previsto <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',6)">Empenhado <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('det',7)">Liquidado <span class="sort-icon">↕</span></th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody id="tbody-det"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL 3: APORTE INDIRETO -->
+<div id="aporte" class="panel">
+    <div class="panel-title">Distribuição de Aporte por Subunidades</div>
+
+    <div class="year-filter" id="year-btns"></div>
+
+    <div id="loader-mod" class="loader"><div class="spinner"></div> Carregando módulos…</div>
+    <div id="table-mod-wrap" class="table-wrap" style="display:none">
+        <div class="table-toolbar">
+            <span id="count-mod">— registros</span>
+            <input class="search-input" id="search-mod" placeholder="🔍 Filtrar por subunidade…" oninput="filtrarTabela('mod')">
+        </div>
+        <div class="table-scroll">
+            <table id="tabela-mod">
+                <thead>
+                    <tr>
+                        <th onclick="ordenarTabela('mod',0)">Ano <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',1)">UND <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',2)">Subunidade <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',3)" class="num-cell">Almoxarifado <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',4)" class="num-cell">Biotério <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',5)" class="num-cell">Correios <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',6)" class="num-cell">Gases p/ Pesquisa <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',7)" class="num-cell">Transp. Aéreo <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',8)" class="num-cell">Veíc. c/ Motorista <span class="sort-icon">↕</span></th>
+                        <th onclick="ordenarTabela('mod',9)" class="num-cell">Total Geral <span class="sort-icon">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-mod"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="aporte-indireto" class="tab-content">
-        <h3 style="color: var(--azul-destaque); margin-top: 0;">Distribuição de Aporte por Subunidades (Modulos)</h3>
-        <div class="container-tabela">
-            <table id="tabela-modulos">
-                <thead>
-                    <tr>
-                        <th>Ano</th>
-                        <th>UND</th>
-                        <th>Subunidade</th>
-                        <th>Almoxarifado</th>
-                        <th>Biotério</th>
-                        <th>Correios</th>
-                        <th>Gases para Pesquisa</th>
-                        <th>Transporte Aéreo</th>
-                        <th>Veículos com Motorista</th>
-                        <th>Total Geral</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+    <!-- mini gráfico de aporte -->
+    <div class="chart-card" id="chart-aporte-wrap" style="margin-top:20px;display:none">
+        <h4>Top 10 Subunidades — Aporte Total (Ano Selecionado)</h4>
+        <canvas id="chart-aporte" style="max-height:320px"></canvas>
     </div>
+</div>
 
-    <script>
-        const KEY = '1vQ9cHW4NlkwltwWgHIk1uQ5jtyvrqm6PMX4A-_QN0-qNAiosdw7TNy9TATgq5EuoHX-SRIjVjurBd7Q';
+<script>
+/* ========================================================
+   CONFIG — IDs das abas do Google Sheets publicado
+   Planilha: 1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo
+   Para usar: Arquivo > Publicar na web > formato CSV
+   ======================================================== */
+const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
+const GIDS = {
+    exec:  '2111124676',   // Liberado-Empenho-Liquidado
+    hist:  '297154210',    // Custeio_Capital
+    prop:  '0',            // proposta_1
+    mod:   '126955298'     // Modulos
+};
 
-        function alterarAba(evt, nomeAba) {
-            const tabcontent = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-            const tablinks = document.getElementsByClassName("tab-btn");
-            for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
-            document.getElementById(nomeAba).style.display = "block";
-            evt.currentTarget.classList.add("active");
+function csvUrl(gid) {
+    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
+/* ===== CSV PARSER ===== */
+function parseCSV(text) {
+    const lines = text.split(/\r?\n/);
+    return lines.map(line => {
+        if (!line.trim()) return null;
+        // suporte a separador ; ou ,
+        const sep = (line.split(';').length > line.split(',').length) ? ';' : ',';
+        const cols = [];
+        let inQ = false, cur = '';
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') { inQ = !inQ; }
+            else if (c === sep && !inQ) { cols.push(cur.trim()); cur = ''; }
+            else { cur += c; }
         }
+        cols.push(cur.trim());
+        return cols;
+    }).filter(Boolean);
+}
 
-        // Parser resiliente modificado para lidar melhor com separadores dinâmicos do Sheets (, ou ;)
-        function parseCSV(text) {
-            let lines = text.split(/\r\n|\n/);
-            return lines.map(line => {
-                if (!line.trim()) return null;
-                
-                // Detecta dinamicamente se a linha usa ponto e vírgula ou vírgula como separador principal
-                let separador = (line.split(';').length > line.split(',').length) ? ';' : ',';
-                
-                let arr = [];
-                let partes = line.split(separador);
-                partes.forEach(p => {
-                    arr.push(p.replace(/^"|"$/g, '').trim());
-                });
-                return arr;
-            }).filter(l => l !== null);
+async function fetchCSV(gid) {
+    const r = await fetch(csvUrl(gid));
+    if (!r.ok) throw new Error(`HTTP ${r.status} ao carregar gid=${gid}`);
+    const t = await r.text();
+    return parseCSV(t);
+}
+
+function limparNum(s) {
+    if (!s) return 0;
+    return parseFloat(s.replace(/[^\d,.-]/g,'').replace(',','.')) || 0;
+}
+
+function fmt(v) {
+    if (typeof v === 'string' && v.includes('R$')) return v;
+    const n = typeof v === 'number' ? v : limparNum(v);
+    return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* ===== TABS ===== */
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+});
+
+/* ===== ESTADO GLOBAL ===== */
+let dadosMod = []; // linhas da aba Modulos
+let anoSelecionado = null;
+let chartHistorico = null, chartPizza = null, chartAporte = null;
+const tabState = {
+    det: { rows: [], sortCol: -1, sortDir: 1 },
+    mod: { rows: [], sortCol: -1, sortDir: 1 }
+};
+
+/* ===================================================
+   INIT
+   =================================================== */
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const [csvExec, csvHist, csvProp, csvMod] = await Promise.all([
+            fetchCSV(GIDS.exec),
+            fetchCSV(GIDS.hist),
+            fetchCSV(GIDS.prop),
+            fetchCSV(GIDS.mod)
+        ]);
+
+        renderKPIs(csvExec);
+        renderGraficos(csvHist);
+        renderTabelaDet(csvProp);
+        dadosMod = csvMod;
+        renderModulos(csvMod);
+
+        const agora = new Date();
+        document.getElementById('sync-text').textContent =
+            `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR')}`;
+        document.querySelector('.dot').style.background = '#22c55e';
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('sync-text').textContent = 'Erro ao carregar dados';
+        document.querySelector('.dot').style.background = '#f87171';
+    }
+});
+
+/* ===================================================
+   PANEL 1 — KPIs
+   =================================================== */
+function renderKPIs(rows) {
+    const map = {
+        'cust-lib': null, 'cust-emp': null, 'cust-liq': null,
+        'cap-lib':  null, 'cap-emp':  null, 'cap-liq':  null,
+        'tot-lib':  null, 'tot-emp':  null, 'tot-liq':  null
+    };
+
+    rows.forEach(cols => {
+        if (!cols || cols.length < 3) return;
+        const tipo    = (cols[0] || '').trim();
+        const metrica = (cols[1] || '').toUpperCase();
+        const valor   = cols[2];
+
+        const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
+        const isEmp = metrica.includes('EMPENH');
+        const isLiq = metrica.includes('LIQUID');
+
+        if (tipo === 'Custeio') {
+            if (isDot) map['cust-lib'] = valor;
+            if (isEmp) map['cust-emp'] = valor;
+            if (isLiq) map['cust-liq'] = valor;
+        } else if (tipo === 'Capital') {
+            if (isDot) map['cap-lib'] = valor;
+            if (isEmp) map['cap-emp'] = valor;
+            if (isLiq) map['cap-liq'] = valor;
+        } else if (tipo.startsWith('Total')) {
+            if (isDot) map['tot-lib'] = valor;
+            if (isEmp) map['tot-emp'] = valor;
+            if (isLiq) map['tot-liq'] = valor;
         }
+    });
 
-        function limparValor(txt) {
-            if (!txt) return 0;
-            let limpo = txt.replace(/[R$\s.]/g, '').replace(',', '.');
-            return parseFloat(limpo) || 0;
-        }
+    Object.entries(map).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val ? fmt(val) : 'R$ 0,00';
+    });
+}
 
-        async function carregarDadosDadosCSV(gid) {
-            const url = `https://docs.google.com/spreadsheets/d/e/${KEY}/pub?output=csv&gid=${gid}`;
-            const resposta = await fetch(url);
-            const texto = await resposta.text();
-            return parseCSV(texto);
-        }
+/* ===================================================
+   PANEL 1 — GRÁFICOS
+   =================================================== */
+function renderGraficos(rows) {
+    const anos = {};
+    rows.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 3) return;
+        const cat = (cols[0] || '').trim();
+        const ano = (cols[1] || '').trim();
+        const val = limparNum(cols[2]);
+        if (!ano) return;
+        if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
+        if (cat === 'Custeio') anos[ano].Custeio = val;
+        if (cat === 'Capital') anos[ano].Capital = val;
+    });
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Aba 1: Liberado-Empenho-Liquidado
-                const csvExec = await carregarDadosDadosCSV('2111124676');
-                processarCards(csvExec);
+    const labels = Object.keys(anos).sort();
+    const custeio = labels.map(a => anos[a].Custeio);
+    const capital = labels.map(a => anos[a].Capital);
 
-                // Aba 1 (Gráfico): Custeio_Capital
-                const csvHist = await carregarDadosDadosCSV('297154210');
-                processarGrafico(csvHist);
+    const grid = { color: 'rgba(255,255,255,.06)' };
+    const tickColor = '#6a82a4';
 
-                // Aba 2: proposta_1
-                const csvProp = await carregarDadosDadosCSV('0');
-                processarTabelaGeral(csvProp, 'tabela-proposta', [0, 1, 2, 3, 6, 7, 12, 13]);
-
-                // Aba 3: Modulos
-                const csvMod = await carregarDadosDadosCSV('126955298');
-                processarTabelaGeral(csvMod, 'tabela-modulos', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-
-                const agora = new Date();
-                document.getElementById('data-atualizacao').textContent = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR')}`;
-            } catch (e) {
-                console.error(e);
-                document.getElementById('data-atualizacao').textContent = "Erro ao renderizar. Verifique a estrutura das abas.";
+    // Gráfico barras empilhadas
+    const ctx1 = document.getElementById('chart-historico').getContext('2d');
+    if (chartHistorico) chartHistorico.destroy();
+    chartHistorico = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 },
+                { label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
+            scales: {
+                x: { stacked: true, grid, ticks: { color: tickColor } },
+                y: { stacked: true, grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e6).toFixed(1) + 'M' } }
             }
+        }
+    });
+
+    // Donut: composição do último ano
+    const ult = labels[labels.length - 1];
+    const ctx2 = document.getElementById('chart-pizza').getContext('2d');
+    if (chartPizza) chartPizza.destroy();
+    chartPizza = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Custeio', 'Capital'],
+            datasets: [{
+                data: [anos[ult]?.Custeio || 0, anos[ult]?.Capital || 0],
+                backgroundColor: ['#0077b6', '#00c2e0'],
+                borderColor: '#0f2444',
+                borderWidth: 3,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: { labels: { color: '#e8edf5', font: { size: 12 } } },
+                tooltip: { callbacks: { label: ctx => fmt(ctx.parsed) } }
+            }
+        }
+    });
+}
+
+/* ===================================================
+   PANEL 2 — DETALHAMENTO
+   =================================================== */
+function renderTabelaDet(rows) {
+    document.getElementById('loader-det').style.display = 'none';
+    document.getElementById('table-det-wrap').style.display = 'block';
+
+    // colunas: Setor(0) Grupos(1) Subgrupo(2) Detalhamento(3) Despesa(6) Previsto(7) Empenhado(12) Liquidado(13)
+    const IDX = [0, 1, 2, 3, 6, 7, 12, 13];
+    const NUM = [5, 6, 7]; // índices no array final que são numéricos
+
+    const data = rows.slice(1).filter(r => r && r.length > 3 && r[0]?.trim());
+    tabState.det.rows = data.map(r => IDX.map(i => r[i] || ''));
+    renderBodyDet();
+}
+
+function renderBodyDet(filtered) {
+    const rows = filtered || tabState.det.rows;
+    const tbody = document.getElementById('tbody-det');
+    tbody.innerHTML = '';
+    document.getElementById('count-det').textContent = `${rows.length} registros`;
+    rows.slice(0, 200).forEach(cols => {
+        const tr = document.createElement('tr');
+        cols.forEach((c, i) => {
+            const td = document.createElement('td');
+            if (i >= 5) { td.className = 'num-cell'; td.textContent = c || '–'; }
+            else td.textContent = c || '–';
+            tr.appendChild(td);
         });
+        tbody.appendChild(tr);
+    });
+}
 
-        function processarCards(linhas) {
-            linhas.forEach(colunas => {
-                if(!colunas || colunas.length < 3) return;
-                const tipo = colunas[0];    
-                const metrica = colunas[1]; 
-                const valorTxt = colunas[2];
+/* ===================================================
+   PANEL 3 — MÓDULOS / APORTE
+   =================================================== */
+function renderModulos(rows) {
+    document.getElementById('loader-mod').style.display = 'none';
+    document.getElementById('table-mod-wrap').style.display = 'block';
+    document.getElementById('chart-aporte-wrap').style.display = 'block';
 
-                // Proteção essencial caso a linha venha incompleta ou nula
-                if (!metrica) return;
+    // A aba Modulos tem colunas: Ano UND Subunidade Gases Correios TranspAereo VeicMotorista Almoxarifado Biotério Total
+    // Remapeamos para a ordem do cabeçalho: Ano UND Sub Almoxa Biotério Correios Gases TranspAéreo VeicMotorista Total
+    // Vamos ler pela posição da planilha:
+    // Col A=Ano B=UND C=Sub D=Gases E=Correios F=TranspAereo G=VeicMotorista H=Almoxarifado I=Biotério J=Total
+    // Colunas no HTML: Ano UND Sub Almoxarifado Biotério Correios Gases Transporte Veículos Total
+    //                  0    1   2       7           8       4       3       5          6      9
+    // mas vamos ler pelo index exato da planilha CSV
+    const IDX = [0, 1, 2, 7, 8, 4, 3, 5, 6, 9]; // Almoxa=col7, Bioter=col8, Correios=col4, Gases=col3, Transp=col5, Veic=col6, Total=col9
 
-                const mUpper = metrica.toUpperCase();
+    const data = rows.slice(1).filter(r => r && r[0]?.trim());
+    tabState.mod.rows = data.map(r => {
+        // garante índices válidos
+        return IDX.map(i => (r[i] || '').trim());
+    });
 
-                if(tipo === "Custeio") {
-                    if(mUpper.includes("DOTACAO")) document.getElementById('cust-lib').textContent = valorTxt;
-                    if(mUpper.includes("EMPENHADAS")) document.getElementById('cust-emp').textContent = valorTxt;
-                    if(mUpper.includes("LIQUIDADAS")) document.getElementById('cust-liq').textContent = valorTxt;
-                } else if(tipo === "Capital") {
-                    if(mUpper.includes("DOTACAO")) document.getElementById('vcap-lib').textContent = valorTxt;
-                    if(mUpper.includes("EMPENHADAS")) document.getElementById('vcap-emp').textContent = valorTxt;
-                    if(mUpper.includes("LIQUIDADAS")) document.getElementById('vcap-liq').textContent = valorTxt;
-                } else if(tipo === "Total" || tipo === "Total Geral") {
-                    if(mUpper.includes("DOTACAO")) document.getElementById('tot-lib').textContent = valorTxt;
-                    if(mUpper.includes("EMPENHADAS")) document.getElementById('tot-emp').textContent = valorTxt;
-                    if(mUpper.includes("LIQUIDADAS")) document.getElementById('tot-liq').textContent = valorTxt;
-                }
-            });
-        }
+    // anos únicos
+    const anos = [...new Set(tabState.mod.rows.map(r => r[0]).filter(Boolean))].sort();
+    const btnWrap = document.getElementById('year-btns');
+    btnWrap.innerHTML = '';
 
-        function processarGrafico(linhas) {
-            let anos = {};
-            linhas.forEach((colunas, i) => {
-                if(i === 0 || !colunas || colunas.length < 3) return;
-                const cat = colunas[0];
-                const ano = colunas[1];
-                const val = limparValor(colunas[2]);
+    const btnTodos = document.createElement('button');
+    btnTodos.className = 'year-btn active';
+    btnTodos.textContent = 'Todos';
+    btnTodos.onclick = () => { anoSelecionado = null; setAnoAtivo(btnTodos); filtrarTabela('mod'); };
+    btnWrap.appendChild(btnTodos);
 
-                if(!ano) return;
+    anos.forEach(ano => {
+        const b = document.createElement('button');
+        b.className = 'year-btn';
+        b.textContent = ano;
+        b.onclick = () => { anoSelecionado = ano; setAnoAtivo(b); filtrarTabela('mod'); };
+        btnWrap.appendChild(b);
+    });
 
-                if(!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
-                if(cat === "Custeio" || cat === "Capital") anos[ano][cat] = val;
-            });
+    filtrarTabela('mod');
+}
 
-            const listaAnos = Object.keys(anos).sort();
-            const dadosCust = listaAnos.map(a => anos[a].Custeio);
-            const dadosCap = listaAnos.map(a => anos[a].Capital);
+function setAnoAtivo(btn) {
+    document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
 
-            const ctx = document.getElementById('historicoChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: listaAnos,
-                    datasets: [
-                        { label: 'Custeio', data: dadosCust, backgroundColor: '#0077b6' },
-                        { label: 'Capital', data: dadosCap, backgroundColor: '#00b4d8' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { stacked: true, grid: { color: '#233554' }, ticks: { color: '#8892b0' } },
-                        y: { stacked: true, grid: { color: '#233554' }, ticks: { color: '#8892b0' } }
-                    },
-                    plugins: { legend: { labels: { color: '#f8f9fa' } } }
-                }
-            });
-        }
+function renderBodyMod(rows) {
+    const tbody = document.getElementById('tbody-mod');
+    tbody.innerHTML = '';
+    document.getElementById('count-mod').textContent = `${rows.length} registros`;
 
-        function processarTabelaGeral(linhas, idTabela, mapeamentoIndices) {
-            const tbody = document.querySelector(`#${idTabela} tbody`);
-            tbody.innerHTML = '';
-            
-            // Renderiza até 50 linhas para manter ótima performance inicial
-            const limite = Math.min(linhas.length, 50);
-            for(let i = 1; i < limite; i++) {
-                const colunas = lines = linhas[i];
-                if(!colunas || colunas.length < 2) continue;
+    rows.slice(0, 300).forEach(cols => {
+        const tr = document.createElement('tr');
+        cols.forEach((c, i) => {
+            const td = document.createElement('td');
+            if (i >= 3) {
+                td.className = 'num-cell';
+                const n = limparNum(c);
+                td.textContent = n ? fmt(n) : '–';
+            } else {
+                td.textContent = c || '–';
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
 
-                const tr = document.createElement('tr');
-                let tdHtml = '';
-                
-                mapeamentoIndices.forEach(idx => {
-                    tdHtml += `<td>${colunas[idx] || '-'}</td>`;
-                });
-                
-                tr.innerHTML = tdHtml;
-                tbody.appendChild(tr);
+    renderChartAporte(rows);
+}
+
+function renderChartAporte(rows) {
+    // agrupa por subunidade, soma Total (idx 9)
+    const agg = {};
+    rows.forEach(r => {
+        const sub = r[2] || r[1] || '?';
+        agg[sub] = (agg[sub] || 0) + limparNum(r[9]);
+    });
+    const sorted = Object.entries(agg).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    const labels = sorted.map(([k]) => k.split(' - ')[0]);
+    const data   = sorted.map(([,v]) => v);
+
+    const ctx = document.getElementById('chart-aporte').getContext('2d');
+    if (chartAporte) chartAporte.destroy();
+    chartAporte = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Aporte Total',
+                data,
+                backgroundColor: labels.map((_, i) =>
+                    `hsl(${200 + i * 14}, 75%, ${55 - i * 2}%)`
+                ),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.x) } }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#6a82a4', callback: v => 'R$' + (v/1e3).toFixed(0) + 'k' } },
+                y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#e8edf5', font: { size: 12 } } }
             }
         }
-    </script>
+    });
+}
+
+/* ===================================================
+   BUSCA / FILTRO
+   =================================================== */
+function filtrarTabela(key) {
+    if (key === 'det') {
+        const q = document.getElementById('search-det').value.toLowerCase();
+        const f = tabState.det.rows.filter(r => r.some(c => c.toLowerCase().includes(q)));
+        renderBodyDet(f);
+    } else {
+        const q = document.getElementById('search-mod').value.toLowerCase();
+        let f = tabState.mod.rows;
+        if (anoSelecionado) f = f.filter(r => r[0] === anoSelecionado);
+        if (q) f = f.filter(r => r.some(c => c.toLowerCase().includes(q)));
+        renderBodyMod(f);
+    }
+}
+
+/* ===================================================
+   ORDENAÇÃO
+   =================================================== */
+function ordenarTabela(key, col) {
+    const st = tabState[key];
+    if (st.sortCol === col) st.sortDir *= -1;
+    else { st.sortCol = col; st.sortDir = 1; }
+
+    st.rows.sort((a, b) => {
+        const va = limparNum(a[col]) || a[col];
+        const vb = limparNum(b[col]) || b[col];
+        if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * st.sortDir;
+        return String(va).localeCompare(String(vb)) * st.sortDir;
+    });
+
+    // atualiza ícone
+    const tblId = key === 'det' ? 'tabela-det' : 'tabela-mod';
+    document.querySelectorAll(`#${tblId} thead th`).forEach((th, i) => {
+        th.classList.toggle('sorted', i === col);
+        th.querySelector('.sort-icon').textContent = i === col ? (st.sortDir === 1 ? '↑' : '↓') : '↕';
+    });
+
+    filtrarTabela(key);
+}
+</script>
 </body>
 </html>
