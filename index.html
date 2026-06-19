@@ -455,11 +455,11 @@
    ======================================================== */
 const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
 const GIDS = {
-    exec:  '2111124676',   // Liberado-Empenho-Liquidado
-    hist:  '297154210',    // Custeio_Capital
-    prop:  '0',            // proposta_1
-    mod:   '126955298'     // Modulos
+    painel: '61010976', // Substitua pelo GID da sua aba Painel
+    prop:   '0',            // proposta_1
+    mod:    '126955298'     // Modulos
 };
+
 
 function csvUrl(gid) {
     return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
@@ -527,15 +527,17 @@ const tabState = {
    =================================================== */
 window.addEventListener('DOMContentLoaded', async () => {
     try {
-        const [csvExec, csvHist, csvProp, csvMod] = await Promise.all([
-            fetchCSV(GIDS.exec),
-            fetchCSV(GIDS.hist),
+        // Carrega o CSV da aba Painel, Detalhamento e Módulos
+        const [csvPainel, csvProp, csvMod] = await Promise.all([
+            fetchCSV(GIDS.painel),
             fetchCSV(GIDS.prop),
             fetchCSV(GIDS.mod)
         ]);
 
-        renderKPIs(csvExec);
-        renderGraficos(csvHist);
+        // Passa o mesmo conjunto de dados (csvPainel) para KPIs e Gráficos
+        renderKPIs(csvPainel);
+        renderGraficos(csvPainel);
+        
         renderTabelaDet(csvProp);
         dadosMod = csvMod;
         renderModulos(csvMod);
@@ -562,11 +564,17 @@ function renderKPIs(rows) {
         'tot-lib':  null, 'tot-emp':  null, 'tot-liq':  null
     };
 
-    rows.forEach(cols => {
-        if (!cols || cols.length < 3) return;
+    rows.forEach((cols, i) => {
+        // Ignora a primeira linha (cabeçalho) e garante que temos as 3 primeiras colunas preenchidas
+        if (i === 0 || !cols || cols.length < 3) return;
+        
+        // Coluna A (0) = Tipo, Coluna B (1) = Métrica, Coluna C (2) = Valor
         const tipo    = (cols[0] || '').trim();
         const metrica = (cols[1] || '').toUpperCase();
         const valor   = cols[2];
+
+        // Se a coluna Tipo estiver vazia, pula a linha
+        if (!tipo) return;
 
         const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
         const isEmp = metrica.includes('EMPENH');
@@ -598,15 +606,21 @@ function renderKPIs(rows) {
    =================================================== */
 function renderGraficos(rows) {
     const anos = {};
+    
     rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length < 3) return;
-        const cat = (cols[0] || '').trim();
-        const ano = (cols[1] || '').trim();
-        const val = limparNum(cols[2]);
+        // Ignora o cabeçalho (linha 0)
+        if (i === 0 || !cols || cols.length < 6) return;
+        
+        // Lê os dados especificamente das Colunas D(3), E(4) e F(5)
+        const ano = (cols[3] || '').trim();
+        
+        // Se não houver ano preenchido na Coluna D, pula essa linha
         if (!ano) return;
-        if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
-        if (cat === 'Custeio') anos[ano].Custeio = val;
-        if (cat === 'Capital') anos[ano].Capital = val;
+        
+        const valCusteio = limparNum(cols[4]);
+        const valCapital = limparNum(cols[5]);
+        
+        anos[ano] = { Custeio: valCusteio, Capital: valCapital };
     });
 
     const labels = Object.keys(anos).sort();
@@ -616,7 +630,7 @@ function renderGraficos(rows) {
     const grid = { color: 'rgba(255,255,255,.06)' };
     const tickColor = '#6a82a4';
 
-    // Gráfico barras empilhadas
+    // Gráfico de barras empilhadas
     const ctx1 = document.getElementById('chart-historico').getContext('2d');
     if (chartHistorico) chartHistorico.destroy();
     chartHistorico = new Chart(ctx1, {
@@ -638,31 +652,33 @@ function renderGraficos(rows) {
         }
     });
 
-    // Donut: composição do último ano
-    const ult = labels[labels.length - 1];
-    const ctx2 = document.getElementById('chart-pizza').getContext('2d');
-    if (chartPizza) chartPizza.destroy();
-    chartPizza = new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: ['Custeio', 'Capital'],
-            datasets: [{
-                data: [anos[ult]?.Custeio || 0, anos[ult]?.Capital || 0],
-                backgroundColor: ['#0077b6', '#00c2e0'],
-                borderColor: '#0f2444',
-                borderWidth: 3,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '65%',
-            plugins: {
-                legend: { labels: { color: '#e8edf5', font: { size: 12 } } },
-                tooltip: { callbacks: { label: ctx => fmt(ctx.parsed) } }
+    // Donut: composição do último ano (se houver dados)
+    if (labels.length > 0) {
+        const ult = labels[labels.length - 1];
+        const ctx2 = document.getElementById('chart-pizza').getContext('2d');
+        if (chartPizza) chartPizza.destroy();
+        chartPizza = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Custeio', 'Capital'],
+                datasets: [{
+                    data: [anos[ult]?.Custeio || 0, anos[ult]?.Capital || 0],
+                    backgroundColor: ['#0077b6', '#00c2e0'],
+                    borderColor: '#0f2444',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: {
+                    legend: { labels: { color: '#e8edf5', font: { size: 12 } } },
+                    tooltip: { callbacks: { label: ctx => fmt(ctx.parsed) } }
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 /* ===================================================
