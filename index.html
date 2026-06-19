@@ -313,6 +313,49 @@
         }
         .year-btn.active, .year-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+        /* ===== TOOLTIPS (hover) ===== */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+[data-tooltip]::before,
+[data-tooltip]::after {
+    position: absolute;
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+    z-index: 100;
+}
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    bottom: calc(100% + 10px);
+    transform: translate(-50%, 4px);
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: normal;
+    max-width: 240px;
+    width: max-content;
+    box-shadow: var(--shadow);
+}
+[data-tooltip]::before {
+    content: '';
+    bottom: calc(100% + 4px);
+    transform: translate(-50%, 4px);
+    border: 6px solid transparent;
+    border-top-color: var(--accent);
+}
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .kpi-grid { grid-template-columns: 110px repeat(3,1fr); }
@@ -350,7 +393,7 @@
         <div class="kpi-col-header">Despesas<br>Empenhadas</div>
         <div class="kpi-col-header">Despesas<br>Liquidadas</div>
         <!-- Custeio -->
-        <div class="kpi-row-label">Custeio</div>
+        <div class="kpi-row-label"data-tooltip="Despesas correntes: manutenção, serviços, material de consumo etc.">Custeio</div>
         <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
         <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
         <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
