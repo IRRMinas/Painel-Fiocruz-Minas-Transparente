@@ -493,8 +493,24 @@ async function fetchCSV(gid) {
 }
 
 function limparNum(s) {
-    if (!s) return 0;
-    return parseFloat(s.replace(/[^\d,.-]/g,'').replace(',','.')) || 0;
+    if (s === null || s === undefined) return 0;
+    if (typeof s === 'number') return s;
+    let str = String(s).trim();
+    if (!str) return 0;
+    str = str.replace(/[^\d.,-]/g, '');
+    if (!str) return 0;
+    const temVirgula = str.indexOf(',') > -1;
+    const temPonto   = str.indexOf('.') > -1;
+    if (temVirgula && temPonto) {
+        // Formato BR: ponto = separador de milhar, vírgula = decimal -> "9.287.295,98"
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else if (temVirgula) {
+        // Só vírgula presente -> é o decimal -> "37803,83"
+        str = str.replace(',', '.');
+    }
+    // Só ponto ou nenhum separador: já está no formato que parseFloat entende
+    const n = parseFloat(str);
+    return isNaN(n) ? 0 : n;
 }
 
 function fmt(v) {
@@ -559,9 +575,8 @@ window.addEventListener('DOMContentLoaded', async () => {
    =================================================== */
 function renderKPIs(rows) {
     const map = {
-        'cust-lib': null, 'cust-emp': null, 'cust-liq': null,
-        'cap-lib':  null, 'cap-emp':  null, 'cap-liq':  null,
-        'tot-lib':  null, 'tot-emp':  null, 'tot-liq':  null
+        'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
+        'cap-lib':  0, 'cap-emp':  0, 'cap-liq':  0
     };
 
     rows.forEach((cols, i) => {
@@ -571,7 +586,7 @@ function renderKPIs(rows) {
         // Coluna A (0) = Tipo, Coluna B (1) = Métrica, Coluna C (2) = Valor
         const tipo    = (cols[0] || '').trim();
         const metrica = (cols[1] || '').toUpperCase();
-        const valor   = cols[2];
+        const valor   = limparNum(cols[2]);
 
         // Se a coluna Tipo estiver vazia, pula a linha
         if (!tipo) return;
@@ -588,16 +603,17 @@ function renderKPIs(rows) {
             if (isDot) map['cap-lib'] = valor;
             if (isEmp) map['cap-emp'] = valor;
             if (isLiq) map['cap-liq'] = valor;
-        } else if (tipo.startsWith('Total')) {
-            if (isDot) map['tot-lib'] = valor;
-            if (isEmp) map['tot-emp'] = valor;
-            if (isLiq) map['tot-liq'] = valor;
         }
     });
 
+    // A planilha não tem uma linha "Total" — o total é a soma de Custeio + Capital
+    map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
+    map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
+    map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
+
     Object.entries(map).forEach(([id, val]) => {
         const el = document.getElementById(id);
-        if (el) el.textContent = val ? fmt(val) : 'R$ 0,00';
+        if (el) el.textContent = fmt(val);
     });
 }
 
@@ -611,16 +627,17 @@ function renderGraficos(rows) {
         // Ignora o cabeçalho (linha 0)
         if (i === 0 || !cols || cols.length < 6) return;
         
-        // Lê os dados especificamente das Colunas D(3), E(4) e F(5)
-        const ano = (cols[3] || '').trim();
-        
-        // Se não houver ano preenchido na Coluna D, pula essa linha
-        if (!ano) return;
-        
-        const valCusteio = limparNum(cols[4]);
-        const valCapital = limparNum(cols[5]);
-        
-        anos[ano] = { Custeio: valCusteio, Capital: valCapital };
+        // Colunas D(3)=IRR/SEFI (Capital/Custeio), E(4)=Ano, F(5)=Orçamento Liberado
+        const tipo = (cols[3] || '').trim();
+        const ano  = (cols[4] || '').trim().replace(/\.0$/, '');
+        const valor = limparNum(cols[5]);
+
+        // Se não houver ano ou tipo preenchido, pula essa linha
+        if (!ano || !tipo) return;
+
+        if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
+        if (tipo === 'Custeio') anos[ano].Custeio += valor;
+        else if (tipo === 'Capital') anos[ano].Capital += valor;
     });
 
     const labels = Object.keys(anos).sort();
@@ -706,8 +723,13 @@ function renderBodyDet(filtered) {
         const tr = document.createElement('tr');
         cols.forEach((c, i) => {
             const td = document.createElement('td');
-            if (i >= 5) { td.className = 'num-cell'; td.textContent = c || '–'; }
-            else td.textContent = c || '–';
+            if (i >= 5) {
+                td.className = 'num-cell';
+                const n = limparNum(c);
+                td.textContent = c ? fmt(n) : '–';
+            } else {
+                td.textContent = c || '–';
+            }
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
