@@ -313,48 +313,65 @@
         }
         .year-btn.active, .year-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* ===== TOOLTIPS (hover) ===== */
-[data-tooltip] {
-    position: relative;
-    cursor: help;
-}
-[data-tooltip]::before,
-[data-tooltip]::after {
-    position: absolute;
-    left: 50%;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .15s ease, transform .15s ease;
-    z-index: 100;
-}
-[data-tooltip]::after {
-    content: attr(data-tooltip);
-    bottom: calc(100% + 10px);
-    transform: translate(-50%, 4px);
-    background: var(--surface);
-    color: var(--text);
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: normal;
-    max-width: 240px;
-    width: max-content;
-    box-shadow: var(--shadow);
-}
-[data-tooltip]::before {
-    content: '';
-    bottom: calc(100% + 4px);
-    transform: translate(-50%, 4px);
-    border: 6px solid transparent;
-    border-top-color: var(--accent);
-}
-[data-tooltip]:hover::before,
-[data-tooltip]:hover::after {
-    opacity: 1;
-    transform: translate(-50%, 0);
-}
+        /* ===== ÁRVORE EXPANSÍVEL (Área > Grupo > Sub-grupo > Despesa) ===== */
+        .tree-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .tree-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 16px;
+            background: rgba(5,14,29,.95);
+            border-bottom: 2px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--accent);
+        }
+        details.tree-area, details.tree-grupo, details.tree-subgrupo { border-bottom: 1px solid var(--border); }
+        details.tree-area:last-child { border-bottom: none; }
+        summary.tree-summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            user-select: none;
+        }
+        summary.tree-summary::-webkit-details-marker { display: none; }
+        .tree-toggle { display: inline-block; width: 14px; margin-right: 8px; }
+        .tree-toggle::before { content: '▸'; color: var(--accent); font-size: 11px; }
+        details[open] > summary .tree-toggle::before { content: '▾'; }
+
+        .tree-area-summary   { background: rgba(0,194,224,.06); font-weight: 700; color: var(--accent); }
+        .tree-grupo-summary  { background: rgba(255,255,255,.02); font-weight: 600; padding-left: 36px; }
+        .tree-subgrupo-summary { font-weight: 500; padding-left: 56px; font-size: 13px; }
+        .tree-leaf {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 16px 7px 76px;
+            font-size: 12.5px;
+            color: var(--muted);
+            border-top: 1px dashed var(--border);
+        }
+        .tree-leaf:hover { background: rgba(0,194,224,.04); color: var(--text); }
+        .tree-label { flex: 1; text-align: left; padding-right: 12px; }
+        .tree-values { display: flex; gap: 0; flex-shrink: 0; }
+        .tree-values span { width: 120px; text-align: right; font-variant-numeric: tabular-nums; }
+        @media (max-width: 768px) {
+            .tree-values span { width: 80px; font-size: 11px; }
+            .tree-grupo-summary { padding-left: 24px; }
+            .tree-subgrupo-summary { padding-left: 36px; }
+            .tree-leaf { padding-left: 48px; }
+        }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
@@ -393,7 +410,7 @@
         <div class="kpi-col-header">Despesas<br>Empenhadas</div>
         <div class="kpi-col-header">Despesas<br>Liquidadas</div>
         <!-- Custeio -->
-        <div class="kpi-row-label" data-tooltip="Despesas de Custeio: despesas que não contribuem, diretamente, para a formação ou aquisição de um bem de capital. São todas as despesas necessárias para manutenção e funcionamento dos serviços públicos em geral.">Custeio</div>
+        <div class="kpi-row-label">Custeio</div>
         <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
         <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
         <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
@@ -423,29 +440,51 @@
 
 <!-- PANEL 2: DETALHAMENTO -->
 <div id="detalhamento" class="panel">
-    <div class="panel-title">Detalhamento Analítico — proposta_1</div>
+    <div class="panel-title">Plano Anual — Detalhamento</div>
     <div id="loader-det" class="loader"><div class="spinner"></div> Carregando detalhamento…</div>
-    <div id="table-det-wrap" class="table-wrap" style="display:none">
-        <div class="table-toolbar">
-            <span id="count-det">— registros</span>
-            <input class="search-input" id="search-det" placeholder="🔍 Filtrar por qualquer campo…" oninput="filtrarTabela('det')">
+
+    <div id="det-content" style="display:none">
+        <!-- KPI cards por Área de Investimento -->
+        <div class="kpi-grid">
+            <div></div>
+            <div class="kpi-col-header">Previsto</div>
+            <div class="kpi-col-header">Empenhado</div>
+            <div class="kpi-col-header">Liquidado</div>
+
+            <div class="kpi-row-label">Apoio à Área Finalística</div>
+            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-apoio-prev">–</div></div>
+            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-apoio-emp">–</div></div>
+            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-apoio-liq">–</div></div>
+
+            <div class="kpi-row-label">Área Finalística</div>
+            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-fin-prev">–</div></div>
+            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-fin-emp">–</div></div>
+            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-fin-liq">–</div></div>
+
+            <div class="kpi-row-label">Área Institucional</div>
+            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-inst-prev">–</div></div>
+            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-inst-emp">–</div></div>
+            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-inst-liq">–</div></div>
+
+            <div class="kpi-row-label total">Total</div>
+            <div class="kpi-card total-row liberado"><div class="kpi-label">Previsto</div><div id="det-tot-prev">–</div></div>
+            <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="det-tot-emp">–</div></div>
+            <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="det-tot-liq">–</div></div>
         </div>
-        <div class="table-scroll">
-            <table id="tabela-det">
-                <thead>
-                    <tr>
-                        <th onclick="ordenarTabela('det',0)">Setor Responsável <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',1)">Grupos <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',2)">Sub-grupo <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',3)">Detalhamento <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',4)">Despesa <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',5)">Previsto <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',6)">Empenhado <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('det',7)">Liquidado <span class="sort-icon">↕</span></th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-det"></tbody>
-            </table>
+
+        <!-- Gráfico por Grupo -->
+        <div class="chart-card" style="margin-bottom:24px">
+            <h4>Despesas por Grupo — Previsto x Empenhado x Liquidado</h4>
+            <canvas id="chart-grupos" style="max-height:340px"></canvas>
+        </div>
+
+        <!-- Árvore expansível: Área > Grupo > Sub-grupo > Despesa -->
+        <div class="tree-wrap">
+            <div class="tree-header">
+                <span>Grupos / Sub-grupo / Despesa</span>
+                <span class="tree-values"><span>Previsto</span><span>Empenhado</span><span>Liquidado</span></span>
+            </div>
+            <div id="arvore-detalhamento"></div>
         </div>
     </div>
 </div>
@@ -455,6 +494,7 @@
     <div class="panel-title">Distribuição de Aporte por Subunidades</div>
 
     <div class="year-filter" id="year-btns"></div>
+
 
     <div id="loader-mod" class="loader"><div class="spinner"></div> Carregando módulos…</div>
     <div id="table-mod-wrap" class="table-wrap" style="display:none">
@@ -575,9 +615,8 @@ document.querySelectorAll('.tab').forEach(btn => {
 /* ===== ESTADO GLOBAL ===== */
 let dadosMod = []; // linhas da aba Modulos
 let anoSelecionado = null;
-let chartCusteio = null, chartCapital = null, chartAporte = null;
+let chartCusteio = null, chartCapital = null, chartAporte = null, chartGrupos = null;
 const tabState = {
-    det: { rows: [], sortCol: -1, sortDir: 1 },
     mod: { rows: [], sortCol: -1, sortDir: 1 }
 };
 
@@ -597,7 +636,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         renderKPIs(csvPainel);
         renderGraficos(csvPainel);
         
-        renderTabelaDet(csvProp);
+        renderDetalhamento(csvProp);
         dadosMod = csvMod;
         renderModulos(csvMod);
 
@@ -735,39 +774,215 @@ function renderGraficos(rows) {
 
 /* ===================================================
    PANEL 2 — DETALHAMENTO
+   colunas de proposta_1 (índice 0-based dentro da própria aba):
+   0 Setor Responsável | 1 Grupos | 2 Sub-grupo | 3 Detalhamento
+   4 Detalhamento 2 | 5 Favorecido | 6 despesa | 7 Despesas Previstas
+   8 ED | 9 Processo | 10 Área de investimento | 11 Área de investimento 2
+   12 Despesas Empenhadas | 13 Despesas Liquidadas
    =================================================== */
-function renderTabelaDet(rows) {
+const AREA_ORDER  = ['Área-meio', 'Área Finalística', 'Área Institucional'];
+const AREA_LABELS = {
+    'Área-meio':          'Apoio à Área Finalística',
+    'Área Finalística':   'Área Finalística',
+    'Área Institucional': 'Área Institucional'
+};
+const AREA_IDS = { 'Área-meio': 'apoio', 'Área Finalística': 'fin', 'Área Institucional': 'inst' };
+
+function renderDetalhamento(rows) {
     document.getElementById('loader-det').style.display = 'none';
-    document.getElementById('table-det-wrap').style.display = 'block';
+    document.getElementById('det-content').style.display = 'block';
 
-    // colunas: Setor(0) Grupos(1) Subgrupo(2) Detalhamento(3) Despesa(6) Previsto(7) Empenhado(12) Liquidado(13)
-    const IDX = [0, 1, 2, 3, 6, 7, 12, 13];
-    const NUM = [5, 6, 7]; // índices no array final que são numéricos
-
-    const data = rows.slice(1).filter(r => r && r.length > 3 && r[0]?.trim());
-    tabState.det.rows = data.map(r => IDX.map(i => r[i] || ''));
-    renderBodyDet();
+    const dados = parseDetalhamento(rows);
+    renderKPIsDetalhamento(dados);
+    renderChartGrupos(dados);
+    renderArvore(buildArvore(dados));
 }
 
-function renderBodyDet(filtered) {
-    const rows = filtered || tabState.det.rows;
-    const tbody = document.getElementById('tbody-det');
-    tbody.innerHTML = '';
-    document.getElementById('count-det').textContent = `${rows.length} registros`;
-    rows.slice(0, 200).forEach(cols => {
-        const tr = document.createElement('tr');
-        cols.forEach((c, i) => {
-            const td = document.createElement('td');
-            if (i >= 5) {
-                td.className = 'num-cell';
-                const n = limparNum(c);
-                td.textContent = c ? fmt(n) : '–';
-            } else {
-                td.textContent = c || '–';
+function parseDetalhamento(rows) {
+    const out = [];
+    rows.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 14) return;
+        const grupo     = (cols[1]  || '').trim();
+        const subgrupo  = (cols[2]  || '').trim();
+        const despesa   = (cols[6]  || '').trim();
+        const previsto  = limparNum(cols[7]);
+        const area      = (cols[10] || '').trim();
+        const empenhado = limparNum(cols[12]);
+        const liquidado = limparNum(cols[13]);
+        if (!area && !grupo) return;
+        out.push({ grupo, subgrupo, despesa, previsto, area, empenhado, liquidado });
+    });
+    return out;
+}
+
+/* ---- KPIs por Área de Investimento ---- */
+function renderKPIsDetalhamento(dados) {
+    const sums = {};
+    AREA_ORDER.forEach(a => sums[a] = { previsto: 0, empenhado: 0, liquidado: 0 });
+
+    dados.forEach(r => {
+        if (!sums[r.area]) return;
+        sums[r.area].previsto  += r.previsto;
+        sums[r.area].empenhado += r.empenhado;
+        sums[r.area].liquidado += r.liquidado;
+    });
+
+    const total = { previsto: 0, empenhado: 0, liquidado: 0 };
+    AREA_ORDER.forEach(a => {
+        const id = AREA_IDS[a];
+        document.getElementById(`det-${id}-prev`).textContent = fmt(sums[a].previsto);
+        document.getElementById(`det-${id}-emp`).textContent  = fmt(sums[a].empenhado);
+        document.getElementById(`det-${id}-liq`).textContent  = fmt(sums[a].liquidado);
+        total.previsto  += sums[a].previsto;
+        total.empenhado += sums[a].empenhado;
+        total.liquidado += sums[a].liquidado;
+    });
+
+    document.getElementById('det-tot-prev').textContent = fmt(total.previsto);
+    document.getElementById('det-tot-emp').textContent  = fmt(total.empenhado);
+    document.getElementById('det-tot-liq').textContent  = fmt(total.liquidado);
+}
+
+/* ---- Gráfico por Grupo (coluna H), somando Previsto/Empenhado/Liquidado ---- */
+function renderChartGrupos(dados) {
+    const agg = {};
+    dados.forEach(r => {
+        if (!r.grupo) return;
+        if (!agg[r.grupo]) agg[r.grupo] = { previsto: 0, empenhado: 0, liquidado: 0 };
+        agg[r.grupo].previsto  += r.previsto;
+        agg[r.grupo].empenhado += r.empenhado;
+        agg[r.grupo].liquidado += r.liquidado;
+    });
+
+    const labels     = Object.keys(agg);
+    const previstos  = labels.map(g => agg[g].previsto);
+    const empenhados = labels.map(g => agg[g].empenhado);
+    const liquidados = labels.map(g => agg[g].liquidado);
+
+    const grid = { color: 'rgba(255,255,255,.06)' };
+    const tickColor = '#6a82a4';
+
+    const ctx = document.getElementById('chart-grupos').getContext('2d');
+    if (chartGrupos) chartGrupos.destroy();
+    chartGrupos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Despesas Previstas',  data: previstos,  backgroundColor: '#e0605a', borderRadius: 4 },
+                { label: 'Despesas Empenhadas', data: empenhados, backgroundColor: '#4a7ebb', borderRadius: 4 },
+                { label: 'Despesas Liquidadas', data: liquidados, backgroundColor: '#f2994a', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
+            scales: {
+                x: { grid, ticks: { color: tickColor, autoSkip: false } },
+                y: { grid, ticks: { color: tickColor, callback: v => fmt(v) } }
             }
-            tr.appendChild(td);
+        }
+    });
+}
+
+/* ---- Árvore Área > Grupo > Sub-grupo > Despesa ---- */
+function buildArvore(dados) {
+    const arvore = {};
+    AREA_ORDER.forEach(a => arvore[a] = {});
+
+    dados.forEach(r => {
+        if (!arvore[r.area]) return; // ignora valores de área fora das 3 categorias esperadas
+        const grupo = r.grupo || '(sem grupo)';
+        const sub   = r.subgrupo || '(sem sub-grupo)';
+        const desp  = r.despesa || '(sem despesa)';
+
+        if (!arvore[r.area][grupo]) arvore[r.area][grupo] = {};
+        if (!arvore[r.area][grupo][sub]) arvore[r.area][grupo][sub] = {};
+        if (!arvore[r.area][grupo][sub][desp]) arvore[r.area][grupo][sub][desp] = { previsto: 0, empenhado: 0, liquidado: 0 };
+
+        arvore[r.area][grupo][sub][desp].previsto  += r.previsto;
+        arvore[r.area][grupo][sub][desp].empenhado += r.empenhado;
+        arvore[r.area][grupo][sub][desp].liquidado += r.liquidado;
+    });
+
+    return arvore;
+}
+
+function somaTotais(lista) {
+    const t = { previsto: 0, empenhado: 0, liquidado: 0 };
+    lista.forEach(v => { t.previsto += v.previsto; t.empenhado += v.empenhado; t.liquidado += v.liquidado; });
+    return t;
+}
+
+function valoresHTML(t) {
+    return `<span class="tree-values"><span>${fmt(t.previsto)}</span><span>${fmt(t.empenhado)}</span><span>${fmt(t.liquidado)}</span></span>`;
+}
+
+function renderArvore(arvore) {
+    const wrap = document.getElementById('arvore-detalhamento');
+    wrap.innerHTML = '';
+
+    AREA_ORDER.forEach(areaKey => {
+        const grupos = arvore[areaKey] || {};
+        const gruposKeys = Object.keys(grupos).sort();
+        if (gruposKeys.length === 0) return;
+
+        // total da área = soma de todos os grupos
+        const totaisGrupo = gruposKeys.map(g => somaTotais(
+            Object.values(grupos[g]).flatMap(sub => Object.values(sub))
+        ));
+        const totalArea = somaTotais(totaisGrupo);
+
+        const areaDetails = document.createElement('details');
+        areaDetails.className = 'tree-area';
+        areaDetails.open = true;
+
+        const areaSummary = document.createElement('summary');
+        areaSummary.className = 'tree-summary tree-area-summary';
+        areaSummary.innerHTML = `<span><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` + valoresHTML(totalArea);
+        areaDetails.appendChild(areaSummary);
+
+        gruposKeys.forEach(grupoKey => {
+            const subgrupos = grupos[grupoKey];
+            const subKeys = Object.keys(subgrupos).sort();
+            const totalGrupo = somaTotais(subKeys.flatMap(s => Object.values(subgrupos[s])));
+
+            const grupoDetails = document.createElement('details');
+            grupoDetails.className = 'tree-grupo';
+
+            const grupoSummary = document.createElement('summary');
+            grupoSummary.className = 'tree-summary tree-grupo-summary';
+            grupoSummary.innerHTML = `<span><span class="tree-toggle"></span>${grupoKey}</span>` + valoresHTML(totalGrupo);
+            grupoDetails.appendChild(grupoSummary);
+
+            subKeys.forEach(subKey => {
+                const despesas = subgrupos[subKey];
+                const despKeys = Object.keys(despesas).sort();
+                const totalSub = somaTotais(Object.values(despesas));
+
+                const subDetails = document.createElement('details');
+                subDetails.className = 'tree-subgrupo';
+
+                const subSummary = document.createElement('summary');
+                subSummary.className = 'tree-summary tree-subgrupo-summary';
+                subSummary.innerHTML = `<span><span class="tree-toggle"></span>${subKey}</span>` + valoresHTML(totalSub);
+                subDetails.appendChild(subSummary);
+
+                despKeys.forEach(despKey => {
+                    const v = despesas[despKey];
+                    const leaf = document.createElement('div');
+                    leaf.className = 'tree-leaf';
+                    leaf.innerHTML = `<span class="tree-label">${despKey}</span>` + valoresHTML(v);
+                    subDetails.appendChild(leaf);
+                });
+
+                grupoDetails.appendChild(subDetails);
+            });
+
+            areaDetails.appendChild(grupoDetails);
         });
-        tbody.appendChild(tr);
+
+        wrap.appendChild(areaDetails);
     });
 }
 
@@ -890,17 +1105,11 @@ function renderChartAporte(rows) {
    BUSCA / FILTRO
    =================================================== */
 function filtrarTabela(key) {
-    if (key === 'det') {
-        const q = document.getElementById('search-det').value.toLowerCase();
-        const f = tabState.det.rows.filter(r => r.some(c => c.toLowerCase().includes(q)));
-        renderBodyDet(f);
-    } else {
-        const q = document.getElementById('search-mod').value.toLowerCase();
-        let f = tabState.mod.rows;
-        if (anoSelecionado) f = f.filter(r => r[0] === anoSelecionado);
-        if (q) f = f.filter(r => r.some(c => c.toLowerCase().includes(q)));
-        renderBodyMod(f);
-    }
+    const q = document.getElementById('search-mod').value.toLowerCase();
+    let f = tabState.mod.rows;
+    if (anoSelecionado) f = f.filter(r => r[0] === anoSelecionado);
+    if (q) f = f.filter(r => r.some(c => c.toLowerCase().includes(q)));
+    renderBodyMod(f);
 }
 
 /* ===================================================
@@ -919,8 +1128,7 @@ function ordenarTabela(key, col) {
     });
 
     // atualiza ícone
-    const tblId = key === 'det' ? 'tabela-det' : 'tabela-mod';
-    document.querySelectorAll(`#${tblId} thead th`).forEach((th, i) => {
+    document.querySelectorAll('#tabela-mod thead th').forEach((th, i) => {
         th.classList.toggle('sorted', i === col);
         th.querySelector('.sort-icon').textContent = i === col ? (st.sortDir === 1 ? '↑' : '↓') : '↕';
     });
