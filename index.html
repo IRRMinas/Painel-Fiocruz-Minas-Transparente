@@ -183,7 +183,7 @@
         /* ===== CHARTS ===== */
         .charts-row {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr;
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -313,49 +313,6 @@
         }
         .year-btn.active, .year-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* ===== TOOLTIPS (hover) ===== */
-[data-tooltip] {
-    position: relative;
-    cursor: help;
-}
-[data-tooltip]::before,
-[data-tooltip]::after {
-    position: absolute;
-    left: 50%;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .15s ease, transform .15s ease;
-    z-index: 100;
-}
-[data-tooltip]::after {
-    content: attr(data-tooltip);
-    bottom: calc(100% + 10px);
-    transform: translate(-50%, 4px);
-    background: var(--surface);
-    color: var(--text);
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: normal;
-    max-width: 240px;
-    width: max-content;
-    box-shadow: var(--shadow);
-}
-[data-tooltip]::before {
-    content: '';
-    bottom: calc(100% + 4px);
-    transform: translate(-50%, 4px);
-    border: 6px solid transparent;
-    border-top-color: var(--accent);
-}
-[data-tooltip]:hover::before,
-[data-tooltip]:hover::after {
-    opacity: 1;
-    transform: translate(-50%, 0);
-}
-
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .kpi-grid { grid-template-columns: 110px repeat(3,1fr); }
@@ -393,7 +350,7 @@
         <div class="kpi-col-header">Despesas<br>Empenhadas</div>
         <div class="kpi-col-header">Despesas<br>Liquidadas</div>
         <!-- Custeio -->
-        <div class="kpi-row-label"data-tooltip="Despesas correntes: manutenção, serviços, material de consumo etc.">Custeio</div>
+        <div class="kpi-row-label">Custeio</div>
         <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
         <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
         <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
@@ -411,12 +368,12 @@
 
     <div class="charts-row">
         <div class="chart-card">
-            <h4>Evolução Histórica — Orçamento Liberado (Custeio + Capital)</h4>
-            <canvas id="chart-historico"></canvas>
+            <h4>Histórico do Orçamento de Custeio Liberado para o IRR</h4>
+            <canvas id="chart-custeio"></canvas>
         </div>
         <div class="chart-card">
-            <h4>Composição do Ano Corrente</h4>
-            <canvas id="chart-pizza"></canvas>
+            <h4>Histórico do Orçamento de Capital Liberado para o IRR</h4>
+            <canvas id="chart-capital"></canvas>
         </div>
     </div>
 </div>
@@ -575,7 +532,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 /* ===== ESTADO GLOBAL ===== */
 let dadosMod = []; // linhas da aba Modulos
 let anoSelecionado = null;
-let chartHistorico = null, chartPizza = null, chartAporte = null;
+let chartCusteio = null, chartCapital = null, chartAporte = null;
 const tabState = {
     det: { rows: [], sortCol: -1, sortDir: 1 },
     mod: { rows: [], sortCol: -1, sortDir: 1 }
@@ -690,55 +647,47 @@ function renderGraficos(rows) {
     const grid = { color: 'rgba(255,255,255,.06)' };
     const tickColor = '#6a82a4';
 
-    // Gráfico de barras empilhadas
-    const ctx1 = document.getElementById('chart-historico').getContext('2d');
-    if (chartHistorico) chartHistorico.destroy();
-    chartHistorico = new Chart(ctx1, {
+    // Gráfico 1: Histórico de Custeio (escala em milhões)
+    const ctx1 = document.getElementById('chart-custeio').getContext('2d');
+    if (chartCusteio) chartCusteio.destroy();
+    chartCusteio = new Chart(ctx1, {
         type: 'bar',
         data: {
             labels,
             datasets: [
-                { label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 },
+                { label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid, ticks: { color: tickColor } },
+                y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e6).toFixed(1) + 'M' } }
+            }
+        }
+    });
+
+    // Gráfico 2: Histórico de Capital (escala em milhares)
+    const ctx2 = document.getElementById('chart-capital').getContext('2d');
+    if (chartCapital) chartCapital.destroy();
+    chartCapital = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
                 { label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 }
             ]
         },
         options: {
             responsive: true,
-            plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
+            plugins: { legend: { display: false } },
             scales: {
-                x: { stacked: true, grid, ticks: { color: tickColor } },
-                y: { stacked: true, grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e6).toFixed(1) + 'M' } }
+                x: { grid, ticks: { color: tickColor } },
+                y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e3).toFixed(0) + 'k' } }
             }
         }
     });
-
-    // Donut: composição do último ano (se houver dados)
-    if (labels.length > 0) {
-        const ult = labels[labels.length - 1];
-        const ctx2 = document.getElementById('chart-pizza').getContext('2d');
-        if (chartPizza) chartPizza.destroy();
-        chartPizza = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Custeio', 'Capital'],
-                datasets: [{
-                    data: [anos[ult]?.Custeio || 0, anos[ult]?.Capital || 0],
-                    backgroundColor: ['#0077b6', '#00c2e0'],
-                    borderColor: '#0f2444',
-                    borderWidth: 3,
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                cutout: '65%',
-                plugins: {
-                    legend: { labels: { color: '#e8edf5', font: { size: 12 } } },
-                    tooltip: { callbacks: { label: ctx => fmt(ctx.parsed) } }
-                }
-            }
-        });
-    }
 }
 
 /* ===================================================
