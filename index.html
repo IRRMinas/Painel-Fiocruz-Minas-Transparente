@@ -334,44 +334,95 @@
             letter-spacing: .05em;
             color: var(--accent);
         }
-        details.tree-area, details.tree-grupo, details.tree-subgrupo { border-bottom: 1px solid var(--border); }
+        details.tree-area { border-bottom: 1px solid var(--border); }
         details.tree-area:last-child { border-bottom: none; }
+
         summary.tree-summary {
             list-style: none;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 16px;
+            padding: 11px 16px;
             user-select: none;
+            border-left: 3px solid transparent;
+            transition: background .15s;
         }
         summary.tree-summary::-webkit-details-marker { display: none; }
-        .tree-toggle { display: inline-block; width: 14px; margin-right: 8px; }
-        .tree-toggle::before { content: '▸'; color: var(--accent); font-size: 11px; }
-        details[open] > summary .tree-toggle::before { content: '▾'; }
+        .tree-summary > .tree-label { display: flex; align-items: center; flex: 1; text-align: left; padding-right: 12px; }
 
-        .tree-area-summary   { background: rgba(0,194,224,.06); font-weight: 700; color: var(--accent); }
-        .tree-grupo-summary  { background: rgba(255,255,255,.02); font-weight: 600; padding-left: 36px; }
-        .tree-subgrupo-summary { font-weight: 500; padding-left: 56px; font-size: 13px; }
+        .tree-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        .tree-toggle::before { content: '▸'; font-size: 10px; display: inline-block; transition: transform .15s; }
+        details[open] > summary .tree-toggle::before { transform: rotate(90deg); }
+
+        /* NÍVEL 1 — ÁREA (ciano) */
+        .tree-area-summary {
+            background: rgba(0,194,224,.10);
+            border-left-color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--accent);
+        }
+        .tree-area-summary:hover { background: rgba(0,194,224,.16); }
+        .tree-area-summary .tree-toggle { background: rgba(0,194,224,.18); color: var(--accent); }
+
+        /* contêineres de indentação com linha-guia colorida por nível */
+        .tree-children-area  { margin-left: 22px; padding-left: 16px; border-left: 2px solid rgba(0,194,224,.25); }
+        .tree-children-grupo { margin-left: 22px; padding-left: 16px; border-left: 2px dashed rgba(240,165,0,.35); }
+        .tree-children-sub   { margin-left: 22px; padding-left: 16px; border-left: 2px dashed rgba(34,197,94,.35); }
+
+        /* NÍVEL 2 — GRUPO (dourado) */
+        .tree-grupo-summary {
+            background: rgba(240,165,0,.05);
+            border-left-color: var(--gold);
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--text);
+        }
+        .tree-grupo-summary:hover { background: rgba(240,165,0,.10); }
+        .tree-grupo-summary .tree-toggle { background: rgba(240,165,0,.16); color: var(--gold); }
+
+        /* NÍVEL 3 — SUB-GRUPO (verde) */
+        .tree-subgrupo-summary {
+            background: transparent;
+            border-left-color: var(--green);
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .tree-subgrupo-summary:hover { background: rgba(34,197,94,.07); color: var(--text); }
+        .tree-subgrupo-summary .tree-toggle { background: rgba(34,197,94,.14); color: var(--green); }
+
+        /* NÍVEL 4 — DESPESA (folha, sem ícone de seta) */
         .tree-leaf {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 7px 16px 7px 76px;
+            padding: 7px 16px 7px 4px;
             font-size: 12.5px;
             color: var(--muted);
             border-top: 1px dashed var(--border);
         }
+        .tree-leaf::before { content: '•'; margin-right: 10px; margin-left: 4px; color: var(--border); }
         .tree-leaf:hover { background: rgba(0,194,224,.04); color: var(--text); }
+
         .tree-label { flex: 1; text-align: left; padding-right: 12px; }
         .tree-values { display: flex; gap: 0; flex-shrink: 0; }
         .tree-values span { width: 120px; text-align: right; font-variant-numeric: tabular-nums; }
         @media (max-width: 768px) {
             .tree-values span { width: 80px; font-size: 11px; }
-            .tree-grupo-summary { padding-left: 24px; }
-            .tree-subgrupo-summary { padding-left: 36px; }
-            .tree-leaf { padding-left: 48px; }
+            .tree-children-area, .tree-children-grupo, .tree-children-sub { margin-left: 12px; padding-left: 10px; }
         }
+
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
@@ -939,8 +990,11 @@ function renderArvore(arvore) {
 
         const areaSummary = document.createElement('summary');
         areaSummary.className = 'tree-summary tree-area-summary';
-        areaSummary.innerHTML = `<span><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` + valoresHTML(totalArea);
+        areaSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` + valoresHTML(totalArea);
         areaDetails.appendChild(areaSummary);
+
+        const gruposWrap = document.createElement('div');
+        gruposWrap.className = 'tree-children-area';
 
         gruposKeys.forEach(grupoKey => {
             const subgrupos = grupos[grupoKey];
@@ -952,8 +1006,11 @@ function renderArvore(arvore) {
 
             const grupoSummary = document.createElement('summary');
             grupoSummary.className = 'tree-summary tree-grupo-summary';
-            grupoSummary.innerHTML = `<span><span class="tree-toggle"></span>${grupoKey}</span>` + valoresHTML(totalGrupo);
+            grupoSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${grupoKey}</span>` + valoresHTML(totalGrupo);
             grupoDetails.appendChild(grupoSummary);
+
+            const subsWrap = document.createElement('div');
+            subsWrap.className = 'tree-children-grupo';
 
             subKeys.forEach(subKey => {
                 const despesas = subgrupos[subKey];
@@ -965,23 +1022,29 @@ function renderArvore(arvore) {
 
                 const subSummary = document.createElement('summary');
                 subSummary.className = 'tree-summary tree-subgrupo-summary';
-                subSummary.innerHTML = `<span><span class="tree-toggle"></span>${subKey}</span>` + valoresHTML(totalSub);
+                subSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${subKey}</span>` + valoresHTML(totalSub);
                 subDetails.appendChild(subSummary);
+
+                const despWrap = document.createElement('div');
+                despWrap.className = 'tree-children-sub';
 
                 despKeys.forEach(despKey => {
                     const v = despesas[despKey];
                     const leaf = document.createElement('div');
                     leaf.className = 'tree-leaf';
                     leaf.innerHTML = `<span class="tree-label">${despKey}</span>` + valoresHTML(v);
-                    subDetails.appendChild(leaf);
+                    despWrap.appendChild(leaf);
                 });
 
-                grupoDetails.appendChild(subDetails);
+                subDetails.appendChild(despWrap);
+                subsWrap.appendChild(subDetails);
             });
 
-            areaDetails.appendChild(grupoDetails);
+            grupoDetails.appendChild(subsWrap);
+            gruposWrap.appendChild(grupoDetails);
         });
 
+        areaDetails.appendChild(gruposWrap);
         wrap.appendChild(areaDetails);
     });
 }
