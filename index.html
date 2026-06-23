@@ -42,7 +42,6 @@
       .banner {
         width: 100%;
         height: 220px;
-        /* AJUSTE: Alterado de contain para cover para ocupar toda a largura */
         background: url('imagem/capa.png') no-repeat center center / cover, var(--surface);
         border-bottom: 3px solid var(--accent2);
         position: relative;
@@ -139,7 +138,6 @@
       }
     
       .tab.active {
-        /* AJUSTE: Alterado para branco (#ffffff) para destacar a aba ativa */
         color: #ffffff;
         background: var(--card);
         border-color: var(--accent);
@@ -958,7 +956,8 @@ document.querySelectorAll('.tab').forEach(btn => {
         // AJUSTE: Lógica para alterar o texto de sincronização dinamicamente
         const syncText = document.getElementById('sync-text');
         if (btn.dataset.tab === 'aporte') {
-            syncText.textContent = 'Sincronizado Manual';
+            // ✏️ EDITE A DATA MANUAL AQUI ABAIXO QUANDO NECESSÁRIO:
+            syncText.textContent = 'Sincronizado: 30/03/2026';
         } else {
             syncText.textContent = window.textoSyncGeral;
         }
@@ -986,7 +985,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         renderAporteIndireto(csvPainel);
 
         const agora = new Date();
-        // AJUSTE: Horário fixo às 08:00 salvo na variável global para as abas utilizarem
         window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
         
         // Aplica o texto inicial (pois a página carrega na primeira aba)
