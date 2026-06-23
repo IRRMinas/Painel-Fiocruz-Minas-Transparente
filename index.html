@@ -42,7 +42,8 @@
       .banner {
         width: 100%;
         height: 220px;
-        background: url('imagem/capa.png') no-repeat center center / contain, var(--surface);
+        /* AJUSTE: Alterado de contain para cover para ocupar toda a largura */
+        background: url('imagem/capa.png') no-repeat center center / cover, var(--surface);
         border-bottom: 3px solid var(--accent2);
         position: relative;
       }
@@ -138,7 +139,8 @@
       }
     
       .tab.active {
-        color: var(--accent);
+        /* AJUSTE: Alterado para branco (#ffffff) para destacar a aba ativa */
+        color: #ffffff;
         background: var(--card);
         border-color: var(--accent);
         opacity: 1;
@@ -952,6 +954,14 @@ document.querySelectorAll('.tab').forEach(btn => {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab).classList.add('active');
+        
+        // AJUSTE: Lógica para alterar o texto de sincronização dinamicamente
+        const syncText = document.getElementById('sync-text');
+        if (btn.dataset.tab === 'aporte') {
+            syncText.textContent = 'Sincronizado Manual';
+        } else {
+            syncText.textContent = window.textoSyncGeral;
+        }
     });
 });
 
@@ -976,8 +986,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         renderAporteIndireto(csvPainel);
 
         const agora = new Date();
-        document.getElementById('sync-text').textContent =
-            `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR')}`;
+        // AJUSTE: Horário fixo às 08:00 salvo na variável global para as abas utilizarem
+        window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
+        
+        // Aplica o texto inicial (pois a página carrega na primeira aba)
+        document.getElementById('sync-text').textContent = window.textoSyncGeral;
         document.querySelector('.dot').style.background = '#22c55e';
 
     } catch (e) {
