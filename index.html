@@ -85,7 +85,8 @@
         /* ===== TABS ===== */
         .tabs {
             display: flex;
-            gap: 4px;
+            justify-content: center;
+            gap: 8px;
             padding: 12px 5%;
             background: rgba(11,28,53,.6);
             border-bottom: 1px solid var(--border);
@@ -102,9 +103,18 @@
             font-weight: 600;
             white-space: nowrap;
             transition: all .25s;
+            opacity: .5;
         }
-        .tab:hover   { color: var(--accent); background: var(--card); border-color: var(--border); }
-        .tab.active  { color: var(--accent); background: var(--card); border-color: var(--accent); }
+        .tab:hover   { color: var(--accent); background: var(--card); border-color: var(--border); opacity: .8; }
+        .tab.active  {
+            color: var(--accent);
+            background: var(--card);
+            border-color: var(--accent);
+            opacity: 1;
+            box-shadow: 0 0 0 1px rgba(0,194,224,.3), 0 4px 16px rgba(0,194,224,.28);
+            transform: translateY(-1px);
+        }
+        .tab.active:hover { opacity: 1; }
 
         /* ===== CONTENT PANELS ===== */
         .panel { display: none; padding: 32px 5% 48px; }
