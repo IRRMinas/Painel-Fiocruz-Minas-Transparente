@@ -728,43 +728,35 @@
     
     <body>
 
-<!-- BANNER -->
 <div class="banner"></div>
 
-<!-- TOPBAR -->
 <div class="topbar">
     <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
     <div id="sync-badge"><span class="dot"></span> <span id="sync-text">Carregando dados…</span></div>
 </div>
 
-<!-- TABS -->
 <div class="tabs">
     <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
     <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
     <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
 </div>
 
-<!-- PANEL 1: VISÃO GERAL -->
 <div id="visao" class="panel active">
     <div class="panel-title">2026</div>
 
     <div class="kpi-grid">
-        <!-- headers -->
         <div></div>
         <div class="kpi-col-header">Dot. Atualizada<br>(Liberado)</div>
         <div class="kpi-col-header">Despesas<br>Empenhadas</div>
         <div class="kpi-col-header">Despesas<br>Liquidadas</div>
-        <!-- Custeio -->
         <div class="kpi-row-label" data-tooltip="Despesas correntes: manutenção, serviços, material de consumo etc.">Custeio</div>
         <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
         <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
         <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
-        <!-- Capital -->
         <div class="kpi-row-label">Capital</div>
         <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cap-lib">–</div></div>
         <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cap-emp">–</div></div>
         <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cap-liq">–</div></div>
-        <!-- Total -->
         <div class="kpi-row-label total">Total Geral</div>
         <div class="kpi-card total-row liberado"><div class="kpi-label">Liberado</div><div id="tot-lib">–</div></div>
         <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="tot-emp">–</div></div>
@@ -783,13 +775,11 @@
     </div>
 </div>
 
-<!-- PANEL 2: DETALHAMENTO -->
 <div id="detalhamento" class="panel">
     <div class="panel-title">Plano Anual — Detalhamento</div>
     <div id="loader-det" class="loader"><div class="spinner"></div> Carregando detalhamento…</div>
 
     <div id="det-content" style="display:none">
-        <!-- KPI cards por Área de Investimento -->
         <div class="kpi-grid">
             <div></div>
             <div class="kpi-col-header">Previsto</div>
@@ -817,13 +807,11 @@
             <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="det-tot-liq">–</div></div>
         </div>
 
-        <!-- Gráfico por Grupo -->
         <div class="chart-card" style="margin-bottom:24px">
             <h4>Despesas por Grupo — Previsto x Empenhado x Liquidado</h4>
             <canvas id="chart-grupos" style="max-height:340px"></canvas>
         </div>
 
-        <!-- Árvore expansível: Área > Grupo > Sub-grupo > Despesa -->
         <div class="tree-wrap">
             <div class="tree-header">
                 <span>Grupos / Sub-grupo / Despesa</span>
@@ -834,44 +822,60 @@
     </div>
 </div>
 
-<!-- PANEL 3: APORTE INDIRETO -->
 <div id="aporte" class="panel">
-    <div class="panel-title">Distribuição de Aporte por Subunidades</div>
+    <div class="panel-title">Aporte Indireto à Pesquisa</div>
 
-    <div class="year-filter" id="year-btns"></div>
-
-
-    <div id="loader-mod" class="loader"><div class="spinner"></div> Carregando módulos…</div>
-    <div id="table-mod-wrap" class="table-wrap" style="display:none">
-        <div class="table-toolbar">
-            <span id="count-mod">— registros</span>
-            <input class="search-input" id="search-mod" placeholder="🔍 Filtrar por subunidade…" oninput="filtrarTabela('mod')">
-        </div>
-        <div class="table-scroll">
-            <table id="tabela-mod">
-                <thead>
-                    <tr>
-                        <th onclick="ordenarTabela('mod',0)">Ano <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',1)">UND <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',2)">Subunidade <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',3)" class="num-cell">Almoxarifado <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',4)" class="num-cell">Biotério <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',5)" class="num-cell">Correios <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',6)" class="num-cell">Gases p/ Pesquisa <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',7)" class="num-cell">Transp. Aéreo <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',8)" class="num-cell">Veíc. c/ Motorista <span class="sort-icon">↕</span></th>
-                        <th onclick="ordenarTabela('mod',9)" class="num-cell">Total Geral <span class="sort-icon">↕</span></th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-mod"></tbody>
-            </table>
-        </div>
+    <div class="chart-card" style="margin-bottom: 24px;">
+        <h4>Histórico do Aporte Indireto à Pesquisa</h4>
+        <canvas id="chart-aporte-hist" style="max-height: 340px;"></canvas>
     </div>
 
-    <!-- mini gráfico de aporte -->
-    <div class="chart-card" id="chart-aporte-wrap" style="margin-top:20px;display:none">
-        <h4>Top 10 Subunidades — Aporte Total (Ano Selecionado)</h4>
-        <canvas id="chart-aporte" style="max-height:320px"></canvas>
+    <div class="chart-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h4>Aporte Indireto por Grupo de Pesquisa</h4>
+            <div class="year-filter" id="filter-ano-grupo" style="margin-bottom: 0;"></div>
+        </div>
+        <canvas id="chart-aporte-grupo" style="max-height: 340px;"></canvas>
+    </div>
+
+    <div class="chart-card" style="margin-bottom: 24px;">
+        <h4>Aporte Indireto por Grupo de Pesquisa - 2026</h4>
+        <canvas id="chart-aporte-2026" style="max-height: 340px;"></canvas>
+    </div>
+
+    <div class="chart-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+            <h4>Aporte Indireto por Grupo de Pesquisa - Ano X Despesa</h4>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <div>
+                    <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Categoria:</label>
+                    <select id="g4-categoria" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Ano:</label>
+                    <select id="g4-ano" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+                </div>
+            </div>
+        </div>
+        <canvas id="chart-aporte-ano-desp" style="max-height: 340px;"></canvas>
+    </div>
+
+    <div class="chart-card" style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+            <h4>Aporte Indireto - Grupo de Pesquisa X Ano X Despesa</h4>
+            <div style="display: flex; gap: 24px;">
+                <div>
+                    <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Grupos</label>
+                    <select id="g5-grupo" class="search-input" style="width: 150px; padding: 4px 8px;"></select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Ano</label>
+                    <div id="g5-anos-wrap" style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text);">
+                        </div>
+                </div>
+            </div>
+        </div>
+        <canvas id="chart-aporte-grupo-ano-desp" style="max-height: 340px;"></canvas>
     </div>
 </div>
 
@@ -885,9 +889,7 @@ const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
 const GIDS = {
     painel: '61010976', // Substitua pelo GID da sua aba Painel
     prop:   '0',            // proposta_1
-    mod:    '126955298'     // Modulos
 };
-
 
 function csvUrl(gid) {
     return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
@@ -898,7 +900,6 @@ function parseCSV(text) {
     const lines = text.split(/\r?\n/);
     return lines.map(line => {
         if (!line.trim()) return null;
-        // suporte a separador ; ou ,
         const sep = (line.split(';').length > line.split(',').length) ? ';' : ',';
         const cols = [];
         let inQ = false, cur = '';
@@ -930,13 +931,10 @@ function limparNum(s) {
     const temVirgula = str.indexOf(',') > -1;
     const temPonto   = str.indexOf('.') > -1;
     if (temVirgula && temPonto) {
-        // Formato BR: ponto = separador de milhar, vírgula = decimal -> "9.287.295,98"
         str = str.replace(/\./g, '').replace(',', '.');
     } else if (temVirgula) {
-        // Só vírgula presente -> é o decimal -> "37803,83"
         str = str.replace(',', '.');
     }
-    // Só ponto ou nenhum separador: já está no formato que parseFloat entende
     const n = parseFloat(str);
     return isNaN(n) ? 0 : n;
 }
@@ -958,32 +956,24 @@ document.querySelectorAll('.tab').forEach(btn => {
 });
 
 /* ===== ESTADO GLOBAL ===== */
-let dadosMod = []; // linhas da aba Modulos
-let anoSelecionado = null;
-let chartCusteio = null, chartCapital = null, chartAporte = null, chartGrupos = null;
-const tabState = {
-    mod: { rows: [], sortCol: -1, sortDir: 1 }
-};
+let chartCusteio = null, chartCapital = null, chartGrupos = null;
 
 /* ===================================================
    INIT
    =================================================== */
 window.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Carrega o CSV da aba Painel, Detalhamento e Módulos
-        const [csvPainel, csvProp, csvMod] = await Promise.all([
+        const [csvPainel, csvProp] = await Promise.all([
             fetchCSV(GIDS.painel),
-            fetchCSV(GIDS.prop),
-            fetchCSV(GIDS.mod)
+            fetchCSV(GIDS.prop)
         ]);
 
-        // Passa o mesmo conjunto de dados (csvPainel) para KPIs e Gráficos
         renderKPIs(csvPainel);
         renderGraficos(csvPainel);
-        
         renderDetalhamento(csvProp);
-        dadosMod = csvMod;
-        renderModulos(csvMod);
+        
+        // Renderiza a nova aba de Aporte Indireto
+        renderAporteIndireto(csvPainel);
 
         const agora = new Date();
         document.getElementById('sync-text').textContent =
@@ -1007,15 +997,12 @@ function renderKPIs(rows) {
     };
 
     rows.forEach((cols, i) => {
-        // Ignora a primeira linha (cabeçalho) e garante que temos as 3 primeiras colunas preenchidas
         if (i === 0 || !cols || cols.length < 3) return;
         
-        // Coluna A (0) = Tipo, Coluna B (1) = Métrica, Coluna C (2) = Valor
         const tipo    = (cols[0] || '').trim();
         const metrica = (cols[1] || '').toUpperCase();
         const valor   = limparNum(cols[2]);
 
-        // Se a coluna Tipo estiver vazia, pula a linha
         if (!tipo) return;
 
         const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
@@ -1033,7 +1020,6 @@ function renderKPIs(rows) {
         }
     });
 
-    // A planilha não tem uma linha "Total" — o total é a soma de Custeio + Capital
     map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
     map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
     map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
@@ -1051,15 +1037,12 @@ function renderGraficos(rows) {
     const anos = {};
     
     rows.forEach((cols, i) => {
-        // Ignora o cabeçalho (linha 0)
         if (i === 0 || !cols || cols.length < 6) return;
         
-        // Colunas D(3)=IRR/SEFI (Capital/Custeio), E(4)=Ano, F(5)=Orçamento Liberado
         const tipo = (cols[3] || '').trim();
         const ano  = (cols[4] || '').trim().replace(/\.0$/, '');
         const valor = limparNum(cols[5]);
 
-        // Se não houver ano ou tipo preenchido, pula essa linha
         if (!ano || !tipo) return;
 
         if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
@@ -1074,7 +1057,6 @@ function renderGraficos(rows) {
     const grid = { color: 'rgba(255,255,255,.06)' };
     const tickColor = '#6a82a4';
 
-    // Gráfico 1: Histórico de Custeio (escala em milhões)
     const ctx1 = document.getElementById('chart-custeio').getContext('2d');
     if (chartCusteio) chartCusteio.destroy();
     chartCusteio = new Chart(ctx1, {
@@ -1095,7 +1077,6 @@ function renderGraficos(rows) {
         }
     });
 
-    // Gráfico 2: Histórico de Capital (escala em milhares)
     const ctx2 = document.getElementById('chart-capital').getContext('2d');
     if (chartCapital) chartCapital.destroy();
     chartCapital = new Chart(ctx2, {
@@ -1119,11 +1100,6 @@ function renderGraficos(rows) {
 
 /* ===================================================
    PANEL 2 — DETALHAMENTO
-   colunas de proposta_1 (índice 0-based dentro da própria aba):
-   0 Setor Responsável | 1 Grupos | 2 Sub-grupo | 3 Detalhamento
-   4 Detalhamento 2 | 5 Favorecido | 6 despesa | 7 Despesas Previstas
-   8 ED | 9 Processo | 10 Área de investimento | 11 Área de investimento 2
-   12 Despesas Empenhadas | 13 Despesas Liquidadas
    =================================================== */
 const AREA_ORDER  = ['Área-meio', 'Área Finalística', 'Área Institucional'];
 const AREA_LABELS = {
@@ -1160,7 +1136,6 @@ function parseDetalhamento(rows) {
     return out;
 }
 
-/* ---- KPIs por Área de Investimento ---- */
 function renderKPIsDetalhamento(dados) {
     const sums = {};
     AREA_ORDER.forEach(a => sums[a] = { previsto: 0, empenhado: 0, liquidado: 0 });
@@ -1188,7 +1163,6 @@ function renderKPIsDetalhamento(dados) {
     document.getElementById('det-tot-liq').textContent  = fmt(total.liquidado);
 }
 
-/* ---- Gráfico por Grupo (coluna H), somando Previsto/Empenhado/Liquidado ---- */
 function renderChartGrupos(dados) {
     const agg = {};
     dados.forEach(r => {
@@ -1230,13 +1204,12 @@ function renderChartGrupos(dados) {
     });
 }
 
-/* ---- Árvore Área > Grupo > Sub-grupo > Despesa ---- */
 function buildArvore(dados) {
     const arvore = {};
     AREA_ORDER.forEach(a => arvore[a] = {});
 
     dados.forEach(r => {
-        if (!arvore[r.area]) return; // ignora valores de área fora das 3 categorias esperadas
+        if (!arvore[r.area]) return; 
         const grupo = r.grupo || '(sem grupo)';
         const sub   = r.subgrupo || '(sem sub-grupo)';
         const desp  = r.despesa || '(sem despesa)';
@@ -1272,7 +1245,6 @@ function renderArvore(arvore) {
         const gruposKeys = Object.keys(grupos).sort();
         if (gruposKeys.length === 0) return;
 
-        // total da área = soma de todos os grupos
         const totaisGrupo = gruposKeys.map(g => somaTotais(
             Object.values(grupos[g]).flatMap(sub => Object.values(sub))
         ));
@@ -1344,153 +1316,197 @@ function renderArvore(arvore) {
 }
 
 /* ===================================================
-   PANEL 3 — MÓDULOS / APORTE
+   PANEL 3 — APORTE INDIRETO (NOVO)
    =================================================== */
-function renderModulos(rows) {
-    document.getElementById('loader-mod').style.display = 'none';
-    document.getElementById('table-mod-wrap').style.display = 'block';
-    document.getElementById('chart-aporte-wrap').style.display = 'block';
+let dadosAporte = [];
+let chartAporteHist = null, chartAporteGrupo = null, chartAporte2026 = null, chartG4 = null, chartG5 = null;
 
-    // A aba Modulos tem colunas: Ano UND Subunidade Gases Correios TranspAereo VeicMotorista Almoxarifado Biotério Total
-    // Remapeamos para a ordem do cabeçalho: Ano UND Sub Almoxa Biotério Correios Gases TranspAéreo VeicMotorista Total
-    // Vamos ler pela posição da planilha:
-    // Col A=Ano B=UND C=Sub D=Gases E=Correios F=TranspAereo G=VeicMotorista H=Almoxarifado I=Biotério J=Total
-    // Colunas no HTML: Ano UND Sub Almoxarifado Biotério Correios Gases Transporte Veículos Total
-    //                  0    1   2       7           8       4       3       5          6      9
-    // mas vamos ler pelo index exato da planilha CSV
-    const IDX = [0, 1, 2, 7, 8, 4, 3, 5, 6, 9]; // Almoxa=col7, Bioter=col8, Correios=col4, Gases=col3, Transp=col5, Veic=col6, Total=col9
+const CAT_COLORS = {
+    'Almoxarifado': '#4e79a7',
+    'Biotério': '#f28e2b',
+    'Correios': '#e15759',
+    'Gases para pesquisa': '#76b7b2',
+    'Transporte Aéreo': '#59a14f',
+    'Veículos com motorista': '#edc948'
+};
 
-    const data = rows.slice(1).filter(r => r && r[0]?.trim());
-    tabState.mod.rows = data.map(r => {
-        // garante índices válidos
-        return IDX.map(i => (r[i] || '').trim());
+function renderAporteIndireto(rows) {
+    dadosAporte = [];
+    rows.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length <= 24) return;
+        
+        const ano = (cols[20] || '').trim().replace(/\.0$/, ''); 
+        const und = (cols[21] || '').trim(); 
+        const categoria = (cols[23] || '').trim(); 
+        const total = limparNum(cols[24]); 
+        
+        if (ano && und && categoria && total > 0) {
+            dadosAporte.push({ ano, und, categoria, total });
+        }
     });
 
-    // anos únicos
-    const anos = [...new Set(tabState.mod.rows.map(r => r[0]).filter(Boolean))].sort();
-    const btnWrap = document.getElementById('year-btns');
-    btnWrap.innerHTML = '';
-
-    const btnTodos = document.createElement('button');
-    btnTodos.className = 'year-btn active';
-    btnTodos.textContent = 'Todos';
-    btnTodos.onclick = () => { anoSelecionado = null; setAnoAtivo(btnTodos); filtrarTabela('mod'); };
-    btnWrap.appendChild(btnTodos);
-
-    anos.forEach(ano => {
-        const b = document.createElement('button');
-        b.className = 'year-btn';
-        b.textContent = ano;
-        b.onclick = () => { anoSelecionado = ano; setAnoAtivo(b); filtrarTabela('mod'); };
-        btnWrap.appendChild(b);
-    });
-
-    filtrarTabela('mod');
+    renderChartAporteHist();
+    setupFilterChartAporteGrupo();
+    renderChartAporte2026();
+    setupChart4();
+    setupChart5();
 }
 
-function setAnoAtivo(btn) {
-    document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-function renderBodyMod(rows) {
-    const tbody = document.getElementById('tbody-mod');
-    tbody.innerHTML = '';
-    document.getElementById('count-mod').textContent = `${rows.length} registros`;
-
-    rows.slice(0, 300).forEach(cols => {
-        const tr = document.createElement('tr');
-        cols.forEach((c, i) => {
-            const td = document.createElement('td');
-            if (i >= 3) {
-                td.className = 'num-cell';
-                const n = limparNum(c);
-                td.textContent = n ? fmt(n) : '–';
-            } else {
-                td.textContent = c || '–';
-            }
-            tr.appendChild(td);
+function agruparParaStacked(dados, xField, catField, sortXAscByTotal = false) {
+    let xLabels = [...new Set(dados.map(d => d[xField]))].sort();
+    const categorias = [...new Set(dados.map(d => d[catField]))].sort();
+    
+    if (sortXAscByTotal) {
+        const xTotals = {};
+        dados.forEach(d => { xTotals[d[xField]] = (xTotals[d[xField]] || 0) + d.total; });
+        xLabels.sort((a, b) => xTotals[a] - xTotals[b]);
+    }
+    
+    const datasets = categorias.map(cat => {
+        const data = xLabels.map(xVal => {
+            return dados.filter(d => d[xField] === xVal && d[catField] === cat).reduce((sum, d) => sum + d.total, 0);
         });
-        tbody.appendChild(tr);
+        return { label: cat, data: data, backgroundColor: CAT_COLORS[cat] || '#a0cbe8', borderWidth: 0 };
     });
-
-    renderChartAporte(rows);
+    return { labels: xLabels, datasets };
 }
 
-function renderChartAporte(rows) {
-    // agrupa por subunidade, soma Total (idx 9)
-    const agg = {};
-    rows.forEach(r => {
-        const sub = r[2] || r[1] || '?';
-        agg[sub] = (agg[sub] || 0) + limparNum(r[9]);
-    });
-    const sorted = Object.entries(agg).sort((a,b) => b[1]-a[1]).slice(0, 10);
-    const labels = sorted.map(([k]) => k.split(' - ')[0]);
-    const data   = sorted.map(([,v]) => v);
-
-    const ctx = document.getElementById('chart-aporte').getContext('2d');
-    if (chartAporte) chartAporte.destroy();
-    chartAporte = new Chart(ctx, {
+function renderChartAporteHist() {
+    const ctx = document.getElementById('chart-aporte-hist').getContext('2d');
+    if (chartAporteHist) chartAporteHist.destroy();
+    chartAporteHist = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Aporte Total',
-                data,
-                backgroundColor: labels.map((_, i) =>
-                    `hsl(${200 + i * 14}, 75%, ${55 - i * 2}%)`
-                ),
-                borderRadius: 4
-            }]
-        },
+        data: agruparParaStacked(dadosAporte, 'ano', 'categoria'),
         options: {
-            indexAxis: 'y',
             responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.x) } }
-            },
-            scales: {
-                x: { grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#6a82a4', callback: v => 'R$' + (v/1e3).toFixed(0) + 'k' } },
-                y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#e8edf5', font: { size: 12 } } }
-            }
+            scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
         }
     });
 }
 
-/* ===================================================
-   BUSCA / FILTRO
-   =================================================== */
-function filtrarTabela(key) {
-    const q = document.getElementById('search-mod').value.toLowerCase();
-    let f = tabState.mod.rows;
-    if (anoSelecionado) f = f.filter(r => r[0] === anoSelecionado);
-    if (q) f = f.filter(r => r.some(c => c.toLowerCase().includes(q)));
-    renderBodyMod(f);
+function setupFilterChartAporteGrupo() {
+    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+    const btnWrap = document.getElementById('filter-ano-grupo');
+    btnWrap.innerHTML = '<button class="year-btn active" onclick="selecionarAnoG2(this, null)">(Tudo)</button>';
+    anos.forEach(ano => {
+        btnWrap.innerHTML += `<button class="year-btn" onclick="selecionarAnoG2(this, '${ano}')">${ano}</button>`;
+    });
+    renderChartAporteGrupo(null);
 }
 
-/* ===================================================
-   ORDENAÇÃO
-   =================================================== */
-function ordenarTabela(key, col) {
-    const st = tabState[key];
-    if (st.sortCol === col) st.sortDir *= -1;
-    else { st.sortCol = col; st.sortDir = 1; }
+function selecionarAnoG2(btn, ano) {
+    document.querySelectorAll('#filter-ano-grupo .year-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderChartAporteGrupo(ano);
+}
 
-    st.rows.sort((a, b) => {
-        const va = limparNum(a[col]) || a[col];
-        const vb = limparNum(b[col]) || b[col];
-        if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * st.sortDir;
-        return String(va).localeCompare(String(vb)) * st.sortDir;
+function renderChartAporteGrupo(anoFilter) {
+    const ctx = document.getElementById('chart-aporte-grupo').getContext('2d');
+    const filtrados = anoFilter ? dadosAporte.filter(d => d.ano === anoFilter) : dadosAporte;
+    if (chartAporteGrupo) chartAporteGrupo.destroy();
+    chartAporteGrupo = new Chart(ctx, {
+        type: 'bar',
+        data: agruparParaStacked(filtrados, 'und', 'categoria'),
+        options: {
+            responsive: true,
+            scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+        }
     });
+}
 
-    // atualiza ícone
-    document.querySelectorAll('#tabela-mod thead th').forEach((th, i) => {
-        th.classList.toggle('sorted', i === col);
-        th.querySelector('.sort-icon').textContent = i === col ? (st.sortDir === 1 ? '↑' : '↓') : '↕';
+function renderChartAporte2026() {
+    const ctx = document.getElementById('chart-aporte-2026').getContext('2d');
+    const filtrados = dadosAporte.filter(d => d.ano === '2026');
+    if (chartAporte2026) chartAporte2026.destroy();
+    chartAporte2026 = new Chart(ctx, {
+        type: 'bar',
+        data: agruparParaStacked(filtrados, 'und', 'categoria', true),
+        options: {
+            responsive: true,
+            scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+        }
     });
+}
 
-    filtrarTabela(key);
+function setupChart4() {
+    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+    const categorias = [...new Set(dadosAporte.map(d => d.categoria))].sort();
+    const selAno = document.getElementById('g4-ano');
+    const selCat = document.getElementById('g4-categoria');
+    anos.forEach(a => selAno.add(new Option(a, a)));
+    categorias.forEach(c => selCat.add(new Option(c, c)));
+    if (anos.length > 0) selAno.value = anos[anos.length - 1];
+    selAno.addEventListener('change', renderChart4);
+    selCat.addEventListener('change', renderChart4);
+    renderChart4();
+}
+
+function renderChart4() {
+    const ano = document.getElementById('g4-ano').value;
+    const cat = document.getElementById('g4-categoria').value;
+    const filtrados = dadosAporte.filter(d => d.ano === ano && d.categoria === cat);
+    const agg = {};
+    filtrados.forEach(d => { agg[d.und] = (agg[d.und] || 0) + d.total; });
+    const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+    
+    const ctx = document.getElementById('chart-aporte-ano-desp').getContext('2d');
+    if (chartG4) chartG4.destroy();
+    chartG4 = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: sorted.map(i => i[0]), datasets: [{ label: cat, data: sorted.map(i => i[1]), backgroundColor: '#4e79a7' }] },
+        options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { ticks: { callback: v => fmt(v) } } } }
+    });
+}
+
+function setupChart5() {
+    const grupos = [...new Set(dadosAporte.map(d => d.und))].sort();
+    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+    const selGrupo = document.getElementById('g5-grupo');
+    grupos.forEach(g => selGrupo.add(new Option(g, g)));
+    selGrupo.addEventListener('change', renderChart5);
+
+    const chkWrap = document.getElementById('g5-anos-wrap');
+    chkWrap.innerHTML = '<label><input type="checkbox" id="g5-chk-tudo" checked> (Tudo)</label>';
+    anos.forEach(a => { chkWrap.innerHTML += `<label><input type="checkbox" class="g5-chk-ano" value="${a}"> ${a}</label>`; });
+
+    document.getElementById('g5-chk-tudo').addEventListener('change', (e) => {
+        document.querySelectorAll('.g5-chk-ano').forEach(chk => chk.checked = false);
+        renderChart5();
+    });
+    document.querySelectorAll('.g5-chk-ano').forEach(chk => {
+        chk.addEventListener('change', () => { document.getElementById('g5-chk-tudo').checked = false; renderChart5(); });
+    });
+    renderChart5();
+}
+
+function renderChart5() {
+    const grupo = document.getElementById('g5-grupo').value;
+    const chkTudo = document.getElementById('g5-chk-tudo').checked;
+    const anosSel = Array.from(document.querySelectorAll('.g5-chk-ano:checked')).map(c => c.value);
+
+    let filtrados = dadosAporte.filter(d => d.und === grupo);
+    if (!chkTudo && anosSel.length > 0) filtrados = filtrados.filter(d => anosSel.includes(d.ano));
+
+    const agg = {};
+    let totalGeral = 0;
+    filtrados.forEach(d => { agg[d.categoria] = (agg[d.categoria] || 0) + d.total; totalGeral += d.total; });
+    const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+
+    const labels = sorted.map(i => i[0]);
+    const data = sorted.map(i => i[1]);
+    labels.push('Total');
+    data.push(totalGeral);
+
+    const ctx = document.getElementById('chart-aporte-grupo-ano-desp').getContext('2d');
+    if (chartG5) chartG5.destroy();
+    chartG5 = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: '#4e79a7' }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt(v) } } } }
+    });
 }
 </script>
 </body>
