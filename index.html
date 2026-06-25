@@ -892,7 +892,8 @@ const GIDS = {
 };
 
 function csvUrl(gid) {
-    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+    // cb = cache-buster: garante que o navegador nunca reutilize uma resposta antiga em cache
+    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&cb=${Date.now()}`;
 }
 
 /* ===== CSV PARSER ===== */
@@ -915,7 +916,7 @@ function parseCSV(text) {
 }
 
 async function fetchCSV(gid) {
-    const r = await fetch(csvUrl(gid));
+    const r = await fetch(csvUrl(gid), { cache: 'no-store' });
     if (!r.ok) throw new Error(`HTTP ${r.status} ao carregar gid=${gid}`);
     const t = await r.text();
     return parseCSV(t);
