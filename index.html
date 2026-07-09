@@ -858,14 +858,14 @@
     </div>
 </div>
 
-<!-- ABA 4: ORÇAMENTO APROVADO (ESTRUTURA EM ÁRVORE NATIVA) -->
+<!-- ABA 4: ORÇAMENTO APROVADO (ESTRUTURA EM ÁRVORE CORRIGIDA) -->
 <div id="orcamento-aprovado" class="panel">
     <div style="margin-bottom: 20px;">
         <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Aprovado</h2>
         <p style="color: var(--muted); font-size: 14px;">Visão consolidada e detalhada dos recursos aprovados por setor.</p>
     </div>
 
-    <!-- Área de Gráficos (Mantida conforme solicitado) -->
+    <!-- Área de Gráficos (Mantida) -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
         <div style="background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); height: 250px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
             <span style="color: var(--muted); font-weight: bold;">[ Gráfico Superior 1 ]</span>
@@ -877,18 +877,17 @@
         </div>
     </div>
 
-    <!-- Nova Árvore Expansível Idêntica ao Detalhamento Principal -->
+    <!-- Árvore Expansível Ajustada para Evitar Quebra de Títulos -->
     <div class="tree-wrap">
-        <div class="tree-header">
+        <div class="tree-header" style="padding-right: 20px;">
             <span>Setor Responsável / Despesa / Elemento (ED)</span>
             <span class="tree-values" style="width: auto; gap: 0;">
-                <span style="width: 120px; text-align: right;">Previsto Inicial</span>
-                <span style="width: 120px; text-align: right;">Aprovado Diretoria</span>
-                <span style="width: 120px; text-align: right;">Despesa Ajustada</span>
-                <span style="width: 120px; text-align: right;">Empenhado</span>
+                <span style="width: 150px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
+                <span style="width: 150px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
+                <span style="width: 150px; text-align: right; white-space: nowrap;">Despesa Ajustada</span>
+                <span style="width: 150px; text-align: right; white-space: nowrap;">Empenhado</span>
             </span>
         </div>
-        <!-- O JavaScript vai injetar os blocos expansíveis diretamente aqui dentro -->
         <div id="arvore-orcamento-aprovado"></div>
     </div>
 </div>
@@ -1007,14 +1006,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-/* ===== ATUALIZADO: PROCESSAMENTO EM ÁRVORE EXPANSÍVEL DA ABA RENOMEAR ===== */
+/* ===== ATUALIZADO: PROCESSAMENTO EM ÁRVORE COM ESTILO LIMPO E ESPAÇAMENTO LARGO ===== */
 function renderOrcamentoAprovado(rows) {
     const wrap = document.getElementById('arvore-orcamento-aprovado');
     wrap.innerHTML = '';
 
     const setores = {};
 
-    // 1. Agrupa e soma os dados que vêm do Google Sheets publicado
     rows.forEach((cols, i) => {
         if (i === 0 || !cols || cols.length < 7) return;
 
@@ -1042,43 +1040,45 @@ function renderOrcamentoAprovado(rows) {
         setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, ed, empenhado });
     });
 
-    // Função interna para gerar os blocos de valores alinhados à direita
+    // Função interna ajustada para 150px de largura por coluna financeira
     function valoresOrcamentoHTML(p, ap, aj, e) {
         return `
-            <span class="tree-values" style="width: auto; gap: 0;">
-                <span style="width: 120px; text-align: right;">${fmt(p)}</span>
-                <span style="width: 120px; text-align: right;">${fmt(ap)}</span>
-                <span style="width: 120px; text-align: right;">${fmt(aj)}</span>
-                <span style="width: 120px; text-align: right;">${fmt(e)}</span>
+            <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
+                <span style="width: 150px; text-align: right;">${fmt(p)}</span>
+                <span style="width: 150px; text-align: right;">${fmt(ap)}</span>
+                <span style="width: 150px; text-align: right;">${fmt(aj)}</span>
+                <span style="width: 150px; text-align: right;">${fmt(e)}</span>
             </span>`;
     }
 
-    // 2. Constrói a árvore de elementos interativos na interface
     Object.keys(setores).sort().forEach(setorNome => {
         const grupo = setores[setorNome];
 
-        // NÍVEL 1: O Setor Responsável (Elemento expansível Principal)
         const setorDetails = document.createElement('details');
         setorDetails.className = 'tree-area';
-        setorDetails.open = false; // Começa fechado para ficar organizado, mude para true se quiser aberto
+        setorDetails.open = false;
 
         const setorSummary = document.createElement('summary');
-        setorSummary.className = 'tree-summary tree-area-summary';
+        // Estilização inline para sobrescrever o azul nativo e deixar o texto principal em branco e limpo
+        setorSummary.className = 'tree-summary';
+        setorSummary.style.background = 'transparent';
+        setorSummary.style.borderLeft = '3px solid var(--accent)';
+        setorSummary.style.fontWeight = '700';
+        setorSummary.style.fontSize = '14px';
+        setorSummary.style.color = '#ffffff';
+
         setorSummary.innerHTML = `
-            <span class="tree-label"><span class="tree-toggle"></span>${setorNome}</span>
+            <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
         ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp);
         setorDetails.appendChild(setorSummary);
 
-        // Container de recuo para os filhos (As Despesas)
         const despesasWrap = document.createElement('div');
         despesasWrap.className = 'tree-children-area';
 
-        // NÍVEL 2: As folhas (Despesas internas do Setor)
         grupo.items.forEach(item => {
             const leaf = document.createElement('div');
             leaf.className = 'tree-leaf';
             
-            // Adiciona o código ED ao lado da descrição para identificação imediata
             const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
 
             leaf.innerHTML = `
