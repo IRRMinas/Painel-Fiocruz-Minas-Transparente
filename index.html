@@ -33,12 +33,28 @@
     
       body {
         font-family: 'Segoe UI', system-ui, sans-serif;
-        background: var(--bg);
-        color: var(--text);
+        background: #020710; /* Cor de fundo externa (fora do dashboard) */
+        margin: 0;
+        padding: 0;
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Centraliza o dashboard na tela */
       }
     
       /* ===== BANNER ===== */
+      .dashboard-container {
+         width: 100%;
+         max-width: 1366px; /* Largura fixa clássica do Tableau */
+         background: var(--bg); /* O fundo azul escuro do seu painel */
+         margin-top: 15px; /* A borda/margem regulável no topo */
+         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.7); /* Sombra para destacar o painel do fundo */
+         border: 1px solid var(--border); /* Linha sutil de contorno */
+  
+      /* Se quiser as bordas levemente arredondadas como no print */
+         border-radius: 4px; 
+         overflow: hidden;
+}
       .banner {
         width: 100%;
         height: 220px;
@@ -703,8 +719,9 @@
     </style>
 </head>
 <body>
-
-<div class="banner"></div>
+  
+<div class="dashboard-container">
+    <div class="banner"></div>
 
 <div class="topbar">
     <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
