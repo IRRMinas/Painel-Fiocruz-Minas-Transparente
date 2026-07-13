@@ -6,7 +6,7 @@
     <title>Painel Fiocruz Minas — Orçamento Transparente</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-      /* ===== TOKENS. ===== */
+      /* ===== TOKENS ===== */
       :root {
         --bg: #050e1d;
         --surface: #0b1c35;
@@ -33,31 +33,12 @@
     
       body {
         font-family: 'Segoe UI', system-ui, sans-serif;
-        background: #ffffff; /* Cor de fundo externa (fora do dashboard) */
-        margin: 0;
-        padding: 0;
+        background: var(--bg);
+        color: var(--text);
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Centraliza o dashboard na tela */
       }
     
       /* ===== BANNER ===== */
-      .dashboard-container {
-         width: 100%;
-         max-width: 1680px; /* Largura fixa clássica do Tableau */
-         background: var(--bg); /* O fundo azul escuro do seu painel */
-         margin-top: 15px; /* A borda/margem regulável no topo */
-         margin-bottom: 30px; /* Margem opcional para desgrudar do rodapé da página */
-         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.7); /* Sombra para destacar o painel do fundo */
-         border: 1px solid var(--border); /* Linha sutil de contorno */
-         border-radius: 4px; 
-         overflow: hidden;
-  
-      /* Se quiser as bordas levemente arredondadas como no print */
-         border-radius: 4px; 
-         overflow: hidden;
-}
       .banner {
         width: 100%;
         height: 220px;
@@ -723,8 +704,7 @@
 </head>
 <body>
 
-<div class="dashboard-container">
-    <div class="banner"></div>
+<div class="banner"></div>
 
 <div class="topbar">
     <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
@@ -878,7 +858,6 @@
     </div>
 </div>
 
-<!-- ABA 4: ORÇAMENTO APROVADO (ESTRUTURA EM ÁRVORE CORRIGIDA) -->
 <div id="orcamento-aprovado" class="panel">
     <div style="margin-bottom: 20px;">
         <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Aprovado</h2>
@@ -900,8 +879,8 @@
         <div class="tree-header" style="padding-right: 20px;">
             <span>Setor Responsável / Despesa / Elemento (ED)</span>
             <span class="tree-values" style="width: auto; gap: 0;">
-                <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto</span>
-                <span style="width: 170px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
+                <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
+                <span style="width: 160px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
                 <span style="width: 130px; text-align: right; white-space: nowrap;">Despesa Ajustada</span>
                 <span style="width: 130px; text-align: right; white-space: nowrap;">Empenhado</span>
                 <span style="width: 130px; text-align: right; white-space: nowrap; color: var(--gold);">Liquidado</span>
@@ -911,12 +890,13 @@
         <div id="arvore-orcamento-aprovado"></div>
     </div>
 </div>
+
 <script>
 const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
 const GIDS = {
     painel:   '61010976',
     prop:     '0',
-    renomear: '1008333824' // ID da aba Renomear adicionado aqui
+    renomear: '1008333824'
 };
 
 function csvUrl(gid) {
@@ -974,7 +954,7 @@ function fmt(v) {
     return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
-/* ===== TABS (Navegação unificada) ===== */
+/* ===== TABS ===== */
 document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -994,7 +974,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 /* ===== ESTADO GLOBAL ===== */
 let chartCusteio = null, chartCapital = null, chartGrupos = null;
-let chartOrcamentoED = null, chartExecucaoSetor = null;
+let chartOrcamentoED = null, chartExecucaoSetor = null; 
 
 /* ===== INIT ===== */
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1002,7 +982,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         const [csvPainel, csvProp, csvRenomear] = await Promise.all([
             fetchCSV(GIDS.painel),
             fetchCSV(GIDS.prop),
-            fetchCSV(GIDS.renomear) // Requisição automática da nova aba
+            fetchCSV(GIDS.renomear)
         ]);
 
         renderKPIs(csvPainel);
@@ -1010,7 +990,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         renderDetalhamento(csvProp);
         renderAporteIndireto(csvPainel);
         
-        // GERA A TABELA DINÂMICA DA NOVA ABA AUTOMATICAMENTE
+        // Chamada ativada para carregar a aba nova e os gráficos
         renderOrcamentoAprovado(csvRenomear);
 
         const agora = new Date();
@@ -1026,7 +1006,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-/* ===== PROCESSAMENTO COMPLETO DA ABA RENOMEAR: ÁRVORE E DOIS GRÁFICOS ===== */
+/* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
 function renderOrcamentoAprovado(rows) {
     const wrap = document.getElementById('arvore-orcamento-aprovado');
     wrap.innerHTML = '';
@@ -1049,28 +1029,27 @@ function renderOrcamentoAprovado(rows) {
         const pago       = limparNum(cols[7]);
         const ed         = (cols[8] || '').trim(); 
 
-        // Acumulação para a Árvore e Gráfico 2 (Setores)
         if (!setores[setor]) {
             setores[setor] = {
                 totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
             };
         }
+
         setores[setor].totPrev  += prevInit;
         setores[setor].totAprov += aprovDiret;
         setores[setor].totAjust += despAjust;
         setores[setor].totEmp   += empenhado;
         setores[setor].totLiq   += liquidado;
         setores[setor].totPag   += pago;
+
         setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
 
-        // Acumulação para o Gráfico 1 (Agrupado por ED usando Despesa Ajustada)
         if (ed) {
             const labelED = "ED " + ed;
             dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
         }
     });
 
-    // Função auxiliar de valores da árvore
     function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
         return `
             <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
@@ -1083,11 +1062,12 @@ function renderOrcamentoAprovado(rows) {
             </span>`;
     }
 
-    // Renderiza a Árvore no HTML
     Object.keys(setores).sort().forEach(setorNome => {
         const grupo = setores[setorNome];
+
         const setorDetails = document.createElement('details');
         setorDetails.className = 'tree-area';
+        setorDetails.open = false;
 
         const setorSummary = document.createElement('summary');
         setorSummary.className = 'tree-summary';
@@ -1108,6 +1088,7 @@ function renderOrcamentoAprovado(rows) {
         grupo.items.forEach(item => {
             const leaf = document.createElement('div');
             leaf.className = 'tree-leaf';
+            
             const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
 
             leaf.innerHTML = `
@@ -1120,18 +1101,17 @@ function renderOrcamentoAprovado(rows) {
         wrap.appendChild(setorDetails);
     });
 
-    // ===== RENDERIZAÇÃO DOS DOIS NOVOS GRÁFICOS =====
+    // ===== RENDERIZAÇÃO DOS DOIS GRÁFICOS =====
     const gridStyle = { color: 'rgba(255,255,255,.06)' };
     const tickColor = '#6a82a4';
 
-    // Gráfico 1: Elemento de Despesa (ED) - Barras Horizontais
     const labelsED = Object.keys(dadosED).sort();
     const valoresED = labelsED.map(key => dadosED[key]);
 
     const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
     if (chartOrcamentoED) chartOrcamentoED.destroy();
     chartOrcamentoED = new Chart(ctxED, {
-        type: 'inverse' in Chart ? 'inverse' : 'bar', // Força barras horizontais caso use plugin ou indexAxis
+        type: 'bar',
         data: {
             labels: labelsED,
             datasets: [{
@@ -1142,7 +1122,7 @@ function renderOrcamentoAprovado(rows) {
             }]
         },
         options: {
-            indexAxis: 'y', // Deixa o gráfico horizontal igual ao seu print de exemplo
+            indexAxis: 'y', 
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
@@ -1152,7 +1132,6 @@ function renderOrcamentoAprovado(rows) {
         }
     });
 
-    // Gráfico 2: % Execução Orçamentária por Setor - Barras Verticais
     const labelsSetores = Object.keys(setores).sort();
     const porcentagensSetores = labelsSetores.map(setor => {
         const s = setores[setor];
