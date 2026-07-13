@@ -886,13 +886,13 @@
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div style="background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); height: 250px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-            <span style="color: var(--muted); font-weight: bold;">[ Gráfico Superior 1 ]</span>
-            <small style="color: var(--muted); margin-top: 5px;">Aguardando definições de dados</small>
+        <div class="chart-card">
+            <h4>Orçamento Aprovado por Elemento de Despesa (ED)</h4>
+            <canvas id="chart-orcamento-ed" style="max-height: 250px;"></canvas>
         </div>
-        <div style="background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius); height: 250px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-            <span style="color: var(--muted); font-weight: bold;">[ Gráfico Superior 2 ]</span>
-            <small style="color: var(--muted); margin-top: 5px;">Aguardando definições de dados</small>
+        <div class="chart-card">
+            <h4>% Execução Orçamentária por Setor (Empenhado / Ajustado)</h4>
+            <canvas id="chart-execucao-setor" style="max-height: 250px;"></canvas>
         </div>
     </div>
 
@@ -994,6 +994,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 
 /* ===== ESTADO GLOBAL ===== */
 let chartCusteio = null, chartCapital = null, chartGrupos = null;
+let chartOrcamentoED = null, chartExecucaoSetor = null;
 
 /* ===== INIT ===== */
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1025,12 +1026,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-/* ===== ATUALIZADO: PROCESSAMENTO DA ABA RENOMEAR COM LIQUIDADO E PAGO RECONFIGURADOS ===== */
+/* ===== PROCESSAMENTO COMPLETO DA ABA RENOMEAR: ÁRVORE E DOIS GRÁFICOS ===== */
 function renderOrcamentoAprovado(rows) {
     const wrap = document.getElementById('arvore-orcamento-aprovado');
     wrap.innerHTML = '';
 
     const setores = {};
+    const dadosED = {};
 
     rows.forEach((cols, i) => {
         if (i === 0 || !cols || cols.length < 8) return;
@@ -1038,7 +1040,6 @@ function renderOrcamentoAprovado(rows) {
         let setor = (cols[0] || '').trim().toUpperCase();
         if (!setor) return;
 
-        // Mapeamento corrigido conforme sua nova estrutura de planilha
         const despesa    = (cols[1] || '').trim();
         const prevInit   = limparNum(cols[2]);
         const aprovDiret = limparNum(cols[3]);
@@ -1046,30 +1047,35 @@ function renderOrcamentoAprovado(rows) {
         const empenhado  = limparNum(cols[5]);
         const liquidado  = limparNum(cols[6]);
         const pago       = limparNum(cols[7]);
-        const ed         = (cols[8] || '').trim(); // ED agora está no final (índice 8)
+        const ed         = (cols[8] || '').trim(); 
 
+        // Acumulação para a Árvore e Gráfico 2 (Setores)
         if (!setores[setor]) {
             setores[setor] = {
                 totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
             };
         }
-
         setores[setor].totPrev  += prevInit;
         setores[setor].totAprov += aprovDiret;
         setores[setor].totAjust += despAjust;
         setores[setor].totEmp   += empenhado;
         setores[setor].totLiq   += liquidado;
         setores[setor].totPag   += pago;
-
         setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+
+        // Acumulação para o Gráfico 1 (Agrupado por ED usando Despesa Ajustada)
+        if (ed) {
+            const labelED = "ED " + ed;
+            dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
+        }
     });
 
-    // Bloco HTML das 6 colunas de valores (largura de 130px cada)
+    // Função auxiliar de valores da árvore
     function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
         return `
             <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
                 <span style="width: 130px; text-align: right;">${fmt(p)}</span>
-                <span style="width: 170px; text-align: right;">${fmt(ap)}</span>
+                <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
                 <span style="width: 130px; text-align: right;">${fmt(aj)}</span>
                 <span style="width: 130px; text-align: right;">${fmt(e)}</span>
                 <span style="width: 130px; text-align: right;">${fmt(l)}</span>
@@ -1077,12 +1083,11 @@ function renderOrcamentoAprovado(rows) {
             </span>`;
     }
 
+    // Renderiza a Árvore no HTML
     Object.keys(setores).sort().forEach(setorNome => {
         const grupo = setores[setorNome];
-
         const setorDetails = document.createElement('details');
         setorDetails.className = 'tree-area';
-        setorDetails.open = false;
 
         const setorSummary = document.createElement('summary');
         setorSummary.className = 'tree-summary';
@@ -1103,7 +1108,6 @@ function renderOrcamentoAprovado(rows) {
         grupo.items.forEach(item => {
             const leaf = document.createElement('div');
             leaf.className = 'tree-leaf';
-            
             const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
 
             leaf.innerHTML = `
@@ -1114,6 +1118,72 @@ function renderOrcamentoAprovado(rows) {
 
         setorDetails.appendChild(despesasWrap);
         wrap.appendChild(setorDetails);
+    });
+
+    // ===== RENDERIZAÇÃO DOS DOIS NOVOS GRÁFICOS =====
+    const gridStyle = { color: 'rgba(255,255,255,.06)' };
+    const tickColor = '#6a82a4';
+
+    // Gráfico 1: Elemento de Despesa (ED) - Barras Horizontais
+    const labelsED = Object.keys(dadosED).sort();
+    const valoresED = labelsED.map(key => dadosED[key]);
+
+    const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
+    if (chartOrcamentoED) chartOrcamentoED.destroy();
+    chartOrcamentoED = new Chart(ctxED, {
+        type: 'inverse' in Chart ? 'inverse' : 'bar', // Força barras horizontais caso use plugin ou indexAxis
+        data: {
+            labels: labelsED,
+            datasets: [{
+                label: 'Despesa Ajustada',
+                data: valoresED,
+                backgroundColor: '#0077b6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Deixa o gráfico horizontal igual ao seu print de exemplo
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v/1e3).toFixed(0) + 'k' } },
+                y: { grid: gridStyle, ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // Gráfico 2: % Execução Orçamentária por Setor - Barras Verticais
+    const labelsSetores = Object.keys(setores).sort();
+    const porcentagensSetores = labelsSetores.map(setor => {
+        const s = setores[setor];
+        if (s.totAjust === 0) return 0;
+        return parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
+    });
+
+    const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
+    if (chartExecucaoSetor) chartExecucaoSetor.destroy();
+    chartExecucaoSetor = new Chart(ctxExec, {
+        type: 'bar',
+        data: {
+            labels: labelsSetores,
+            datasets: [{
+                label: '% Executado',
+                data: porcentagensSetores,
+                backgroundColor: '#22c55e',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { 
+                legend: { display: false },
+                tooltip: { callbacks: { label: context => context.raw + '%' } }
+            },
+            scales: {
+                x: { grid: gridStyle, ticks: { color: tickColor, autoSkip: false, maxRotation: 45 } },
+                y: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 }
+            }
+        }
     });
 }
 
