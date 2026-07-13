@@ -1132,6 +1132,7 @@ function renderOrcamentoAprovado(rows) {
         }
     });
 
+// Gráfico 2: % Execução por Setor Responsável - Convertido para Barras Horizontais
     const labelsSetores = Object.keys(setores).sort();
     const porcentagensSetores = labelsSetores.map(setor => {
         const s = setores[setor];
@@ -1148,23 +1149,30 @@ function renderOrcamentoAprovado(rows) {
             datasets: [{
                 label: '% Executado',
                 data: porcentagensSetores,
-                backgroundColor: '#22c55e',
+                backgroundColor: '#22c55e', // Mantida a sua paleta de cor verde
                 borderRadius: 4
             }]
         },
         options: {
+            indexAxis: 'y', // Altera a orientação para barras horizontais de forma nativa
             responsive: true,
             plugins: { 
                 legend: { display: false },
                 tooltip: { callbacks: { label: context => context.raw + '%' } }
             },
             scales: {
-                x: { grid: gridStyle, ticks: { color: tickColor, autoSkip: false, maxRotation: 45 } },
-                y: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 }
+                x: { 
+                    grid: gridStyle, 
+                    ticks: { color: tickColor, callback: v => v + '%' }, 
+                    max: 100 // Fixa o limite final do eixo em 100%
+                },
+                y: { 
+                    grid: gridStyle, 
+                    ticks: { color: '#ffffff', autoSkip: false } // Deixa os nomes dos setores legíveis em branco
+                }
             }
         }
     });
-}
 
 /* ===== PANEL 1 — KPIs ===== */
 function renderKPIs(rows) {
