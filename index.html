@@ -309,6 +309,13 @@
             padding-right: 8px;
         }
 
+        /* Este gráfico tem altura dinâmica (definida via JS) para dar espaço entre as
+           barras/rótulos; a regra geral de max-height:280px do .chart-card canvas
+           não deve limitá-lo — quem controla o "recorte" visível é o wrapper acima. */
+        .chart-scroll-wrapper canvas {
+            max-height: none !important;
+        }
+
         .chart-scroll-wrapper::-webkit-scrollbar {
             width: 6px;
         }
@@ -1396,8 +1403,9 @@
                 if (chartExecucaoSetor) chartExecucaoSetor.destroy();
 
                 // Aumenta a altura do canvas dinamicamente baseado na quantidade de itens
+                // (alturaBase maior = mais espaço entre os rótulos/barras)
                 const canvasExec = document.getElementById('chart-execucao-setor');
-                const alturaBase = 30; // altura por barra
+                const alturaBase = 42; // altura por barra (antes: 30)
                 const alturaMinima = 250;
                 const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
                 canvasExec.style.height = alturaCalculada + 'px';
@@ -1413,6 +1421,8 @@
                             backgroundColor: coresSetores,
                             borderRadius: 4,
                             borderSkipped: false,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.7,
                         }]
                     },
                     options: {
