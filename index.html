@@ -303,7 +303,7 @@
 
         /* ===== CONTAINER COM ROLAGEM PARA O GRÁFICO DE BARRAS ===== */
         .chart-scroll-wrapper {
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
             overflow-x: hidden;
             padding-right: 8px;
@@ -1110,7 +1110,9 @@
                     <h4>% Execução Orçamentária por Setor (Empenhado / Ajustado)</h4>
                     <!-- Wrapper com rolagem para o gráfico de barras -->
                     <div class="chart-scroll-wrapper">
-                        <canvas id="chart-execucao-setor"></canvas>
+                        <div id="chart-execucao-setor-inner" style="position: relative; width: 100%;">
+                            <canvas id="chart-execucao-setor"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1402,13 +1404,18 @@
                 const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
                 if (chartExecucaoSetor) chartExecucaoSetor.destroy();
 
-                // Aumenta a altura do canvas dinamicamente baseado na quantidade de itens
-                // (alturaBase maior = mais espaço entre os rótulos/barras)
+                // Aumenta a altura do gráfico dinamicamente baseado na quantidade de itens
+                // (alturaBase maior = mais espaço entre os rótulos/barras).
+                // IMPORTANTE: a altura precisa ser definida no DIV INTERNO (pai imediato do
+                // canvas), não no wrapper com rolagem — senão o Chart.js (responsive:true)
+                // usa a altura "visível" (400px) do wrapper para calcular o tamanho das
+                // barras, e elas voltam a ficar espremidas mesmo o card crescendo por fora.
                 const canvasExec = document.getElementById('chart-execucao-setor');
+                const innerExec = document.getElementById('chart-execucao-setor-inner');
                 const alturaBase = 42; // altura por barra (antes: 30)
                 const alturaMinima = 250;
                 const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
-                canvasExec.style.height = alturaCalculada + 'px';
+                innerExec.style.height = alturaCalculada + 'px';
                 canvasExec.style.width = '100%';
 
                 chartExecucaoSetor = new Chart(ctxExec, {
