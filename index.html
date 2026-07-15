@@ -1,1057 +1,1291 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Fiocruz Minas — Orçamento Transparente</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-      /* ===== TOKENS ===== */
-      :root {
-        --bg: #050e1d;
-        --surface: #0b1c35;
-        --card: #0f2444;
-        --border: #1a3456;
-        --accent: #00c2e0;
-        --accent2: #0077b6;
-        --gold: #f0a500;
-        --text: #e8edf5;
-        --muted: #6a82a4;
-        --green: #22c55e;
-        --radius: 8px;
-        --shadow: 0 4px 24px rgba(0, 0, 0, .5);
-      }
-    
-      /* ===== RESET ===== */
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-    
-      body {
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        min-height: 100vh;
-      }
-    
-      /* ===== BANNER ===== */
-      .banner {
-        width: 100%;
-        height: 220px;
-        background: url('imagem/capa.png') no-repeat center center / cover, var(--surface);
-        border-bottom: 3px solid var(--accent2);
-        position: relative;
-      }
-    
-      .banner::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
-      }
-    
-      /* ===== TOPBAR ===== */
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 5%;
-        background: rgba(5, 14, 29, .92);
-        border-bottom: 1px solid var(--border);
-        backdrop-filter: blur(6px);
-      }
-    
-      .topbar-title {
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: .04em;
-        color: var(--muted);
-        text-transform: uppercase;
-      }
-    
-      #sync-badge {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        font-size: 12px;
-        color: var(--accent);
-        background: rgba(0, 194, 224, .08);
-        border: 1px solid rgba(0, 194, 224, .25);
-        padding: 5px 14px;
-        border-radius: 20px;
-      }
-    
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--accent);
-        animation: pulse 2s infinite;
-      }
-    
-      @keyframes pulse {
-        0%, 100% { opacity: 1 }
-        50% { opacity: .3 }
-      }
-    
-      /* ===== TABS ===== */
-      .tabs {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 5%;
-        background: rgba(11, 28, 53, .6);
-        border-bottom: 1px solid var(--border);
-        overflow-x: auto;
-      }
-    
-      .tab {
-        background: none;
-        color: var(--muted);
-        border: 1px solid transparent;
-        padding: 9px 20px;
-        border-radius: var(--radius);
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
-        transition: all .25s;
-        opacity: .5;
-      }
-    
-      .tab:hover {
-        color: var(--accent);
-        background: var(--card);
-        border-color: var(--border);
-        opacity: .8;
-      }
-    
-      .tab.active {
-        color: #ffffff;
-        background: var(--card);
-        border-color: var(--accent);
-        opacity: 1;
-        box-shadow: 0 0 0 1px rgba(0, 194, 224, .3), 0 4px 16px rgba(0, 194, 224, .28);
-        transform: translateY(-1px);
-      }
-    
-      .tab.active:hover {
-        opacity: 1;
-      }
-    
-      /* ===== CONTENT PANELS ===== */
-      .panel {
-        display: none;
-        padding: 32px 5% 48px;
-      }
-    
-      .panel.active {
-        display: block;
-      }
-    
-      .panel-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--accent);
-        margin-bottom: 24px;
-        letter-spacing: .02em;
-      }
-    
-      /* ===== KPI GRID ===== */
-      .kpi-grid {
-        display: grid;
-        grid-template-columns: 180px repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 32px;
-      }
-    
-      .kpi-col-header {
-        text-align: center;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .07em;
-        color: var(--muted);
-        padding-bottom: 4px;
-        border-bottom: 1px solid var(--border);
-      }
-    
-      .kpi-row-label {
-        display: flex;
-        align-items: center;
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text);
-      }
-    
-      .kpi-row-label.total {
-        color: var(--accent);
-      }
-    
-      .kpi-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 18px 10px;
-        text-align: center;
-        font-size: 17px;
-        font-weight: 700;
-        color: var(--text);
-        transition: border-color .2s;
-        position: relative;
-        overflow: hidden;
-      }
-    
-      .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: var(--border);
-      }
-    
-      .kpi-card.liberado::before { background: var(--accent2); }
-      .kpi-card.empenhado::before { background: var(--gold); }
-      .kpi-card.liquidado::before { background: var(--green); }
-    
-      .kpi-card.total-row {
-        background: linear-gradient(135deg, #0f2444, #162e52);
-        border-color: var(--accent);
-        color: var(--accent);
-        font-size: 16px;
-      }
-    
-      .kpi-label {
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: var(--muted);
-        margin-bottom: 6px;
-      }
-    
-      /* ===== CHARTS ===== */
-      .charts-row {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-    
-      .chart-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 20px 20px 16px;
-        box-shadow: var(--shadow);
-      }
-    
-      .chart-card h4 {
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: var(--muted);
-        margin-bottom: 16px;
-      }
-    
-      .chart-card canvas {
-        max-height: 280px;
-      }
-    
-      /* ===== TABLE ===== */
-      .table-wrap {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: var(--shadow);
-      }
-    
-      .table-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-    
-      .table-toolbar span {
-        font-size: 12px;
-        color: var(--muted);
-      }
-    
-      .search-input {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 6px 12px;
-        color: var(--text);
-        font-size: 13px;
-        width: 220px;
-        transition: border-color .2s;
-      }
-    
-      .search-input:focus {
-        outline: none;
-        border-color: var(--accent);
-      }
-    
-      .search-input::placeholder {
-        color: var(--muted);
-      }
-    
-      .table-scroll {
-        overflow-x: auto;
-        max-height: 480px;
-        overflow-y: auto;
-      }
-    
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-    
-      thead th {
-        position: sticky;
-        top: 0;
-        background: rgba(5, 14, 29, .95);
-        color: var(--accent);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        padding: 11px 14px;
-        border-bottom: 2px solid var(--border);
-        text-align: left;
-        cursor: pointer;
-        white-space: nowrap;
-        user-select: none;
-      }
-    
-      thead th:hover { color: #fff; }
-    
-      thead th .sort-icon {
-        margin-left: 4px;
-        opacity: .4;
-      }
-    
-      thead th.sorted .sort-icon {
-        opacity: 1;
-        color: var(--gold);
-      }
-    
-      tbody td {
-        padding: 9px 14px;
-        border-bottom: 1px solid var(--border);
-        vertical-align: top;
-      }
-    
-      tbody tr:hover {
-        background: rgba(0, 194, 224, .04);
-      }
-    
-      tbody tr:last-child td {
-        border-bottom: none;
-      }
-    
-      .num-cell {
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-      }
-    
-      .badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
-        background: rgba(0, 194, 224, .12);
-        color: var(--accent);
-      }
-    
-      /* ===== LOADING ===== */
-      .loader {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        padding: 60px 20px;
-        color: var(--muted);
-        font-size: 14px;
-      }
-    
-      .spinner {
-        width: 24px;
-        height: 24px;
-        border: 3px solid var(--border);
-        border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin .8s linear infinite;
-      }
-    
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    
-      .error-msg {
-        text-align: center;
-        padding: 40px;
-        color: #f87171;
-        font-size: 14px;
-      }
-    
-      /* ===== YEAR FILTER ===== */
-      .year-filter {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin-bottom: 16px;
-      }
-    
-      .year-btn {
-        background: var(--card);
-        border: 1px solid var(--border);
-        color: var(--muted);
-        padding: 5px 14px;
-        border-radius: 20px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all .2s;
-      }
-    
-      .year-btn.active,
-      .year-btn:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-    
-      /* ===== ÁRVORE EXPANSÍVEL ===== */
-      .tree-wrap {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: var(--shadow);
-      }
-    
-      .tree-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 11px 16px;
-        background: rgba(5, 14, 29, .95);
-        border-bottom: 2px solid var(--border);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        color: var(--accent);
-      }
-    
-      details.tree-area {
-        border-bottom: 1px solid var(--border);
-      }
-    
-      details.tree-area:last-child {
-        border-bottom: none;
-      }
-    
-      summary.tree-summary {
-        list-style: none;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 11px 16px;
-        user-select: none;
-        border-left: 3px solid transparent;
-        transition: background .15s;
-      }
-    
-      summary.tree-summary::-webkit-details-marker {
-        display: none;
-      }
-    
-      .tree-summary>.tree-label {
-        display: flex;
-        align-items: center;
-        flex: 1;
-        text-align: left;
-        padding-right: 12px;
-      }
-    
-      .tree-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        min-width: 18px;
-        margin-right: 10px;
-        border-radius: 5px;
-      }
-    
-      .tree-toggle::before {
-        content: '▸';
-        font-size: 10px;
-        display: inline-block;
-        transition: transform .15s;
-      }
-    
-      details[open]>summary .tree-toggle::before {
-        transform: rotate(90deg);
-      }
-    
-      /* NÍVEL 1 — ÁREA (ciano) */
-      .tree-area-summary {
-        background: rgba(0, 194, 224, .10);
-        border-left-color: var(--accent);
-        font-weight: 700;
-        font-size: 14px;
-        color: var(--accent);
-      }
-    
-      .tree-area-summary:hover {
-        background: rgba(0, 194, 224, .16);
-      }
-    
-      .tree-area-summary .tree-toggle {
-        background: rgba(0, 194, 224, .18);
-        color: var(--accent);
-      }
-    
-      .tree-children-area {
-        margin-left: 22px;
-        padding-left: 16px;
-        border-left: 2px solid rgba(0, 194, 224, .25);
-      }
-    
-      .tree-children-grupo {
-        margin-left: 22px;
-        padding-left: 16px;
-        border-left: 2px dashed rgba(240, 165, 0, .35);
-      }
-    
-      .tree-children-sub {
-        margin-left: 22px;
-        padding-left: 16px;
-        border-left: 2px dashed rgba(34, 197, 94, .35);
-      }
-    
-      /* NÍVEL 2 — GRUPO (dourado) */
-      .tree-grupo-summary {
-        background: rgba(240, 165, 0, .05);
-        border-left-color: var(--gold);
-        font-weight: 600;
-        font-size: 13.5px;
-        color: var(--text);
-      }
-    
-      .tree-grupo-summary:hover {
-        background: rgba(240, 165, 0, .10);
-      }
-    
-      .tree-grupo-summary .tree-toggle {
-        background: rgba(240, 165, 0, .16);
-        color: var(--gold);
-      }
-    
-      /* NÍVEL 3 — SUB-GRUPO (verde) */
-      .tree-subgrupo-summary {
-        background: transparent;
-        border-left-color: var(--green);
-        font-weight: 500;
-        font-size: 13px;
-        color: var(--muted);
-      }
-    
-      .tree-subgrupo-summary:hover {
-        background: rgba(34, 197, 94, .07);
-        color: var(--text);
-      }
-    
-      .tree-subgrupo-summary .tree-toggle {
-        background: rgba(34, 197, 94, .14);
-        color: var(--green);
-      }
-    
-      /* NÍVEL 4 — DESPESA */
-      .tree-leaf {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 7px 16px 7px 4px;
-        font-size: 12.5px;
-        color: var(--muted);
-        border-top: 1px dashed var(--border);
-      }
-    
-      .tree-leaf::before {
-        content: '•';
-        margin-right: 10px;
-        margin-left: 4px;
-        color: var(--border);
-      }
-    
-      .tree-leaf:hover {
-        background: rgba(0, 194, 224, .04);
-        color: var(--text);
-      }
-    
-      .tree-label {
-        flex: 1;
-        text-align: left;
-        padding-right: 12px;
-      }
-    
-      .tree-values {
-        display: flex;
-        gap: 0;
-        flex-shrink: 0;
-      }
-    
-      .tree-values span {
-        width: 120px;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-      }
-    
-      /* ===== TOOLTIPS ===== */
-      [data-tooltip] {
-        position: relative;
-        cursor: help;
-      }
-    
-      [data-tooltip]::before,
-      [data-tooltip]::after {
-        position: absolute;
-        left: 50%;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .15s ease, transform .15s ease;
-        z-index: 100;
-      }
-    
-      [data-tooltip]::after {
-        content: attr(data-tooltip);
-        bottom: calc(100% + 10px);
-        transform: translate(-50%, 4px);
-        background: var(--surface);
-        color: var(--text);
-        border: 1px solid var(--accent);
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 12px;
-        font-weight: 500;
-        white-space: normal;
-        max-width: 240px;
-        width: max-content;
-        box-shadow: var(--shadow);
-      }
-    
-      [data-tooltip]::before {
-        content: '';
-        bottom: calc(100% + 4px);
-        transform: translate(-50%, 4px);
-        border: 6px solid transparent;
-        border-top-color: var(--accent);
-      }
-    
-      [data-tooltip]:hover::before,
-      [data-tooltip]:hover::after {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-    
-      /* ===== RESPONSIVE ===== */
-      @media (max-width: 768px) {
+        /* ===== TOKENS ===== */
+        :root {
+            --bg: #050e1d;
+            --surface: #0b1c35;
+            --card: #0f2444;
+            --border: #1a3456;
+            --accent: #00c2e0;
+            --accent2: #0077b6;
+            --gold: #f0a500;
+            --text: #e8edf5;
+            --muted: #6a82a4;
+            --green: #22c55e;
+            --radius: 8px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, .5);
+        }
+
+        /* ===== RESET ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #ffffff;
+            /* Deixa as laterais e o topo totalmente brancos */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1680px;
+            /* Aumentado de 1366px para 1440px para dar mais espaço e não cortar o texto */
+            background: var(--bg);
+            margin-top: 15px;
+            margin-bottom: 30px;
+            /* Margem opcional para desgrudar do rodapé da página */
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            /* Sombra um pouco mais suave no fundo branco */
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* ===== BANNER ===== */
+        .banner {
+            width: 100%;
+            height: 220px;
+            background: url('imagem/capa.png') no-repeat center center / cover, var(--surface);
+            border-bottom: 3px solid var(--accent2);
+            position: relative;
+        }
+
+        .banner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 5%;
+            background: rgba(5, 14, 29, .92);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(6px);
+        }
+
+        .topbar-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        #sync-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: var(--accent);
+            background: rgba(0, 194, 224, .08);
+            border: 1px solid rgba(0, 194, 224, .25);
+            padding: 5px 14px;
+            border-radius: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 5%;
+            background: rgba(11, 28, 53, .6);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            background: none;
+            color: var(--muted);
+            border: 1px solid transparent;
+            padding: 9px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all .25s;
+            opacity: .5;
+        }
+
+        .tab:hover {
+            color: var(--accent);
+            background: var(--card);
+            border-color: var(--border);
+            opacity: .8;
+        }
+
+        .tab.active {
+            color: #ffffff;
+            background: var(--card);
+            border-color: var(--accent);
+            opacity: 1;
+            box-shadow: 0 0 0 1px rgba(0, 194, 224, .3), 0 4px 16px rgba(0, 194, 224, .28);
+            transform: translateY(-1px);
+        }
+
+        .tab.active:hover {
+            opacity: 1;
+        }
+
+        /* ===== CONTENT PANELS ===== */
+        .panel {
+            display: none;
+            padding: 32px 5% 48px;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 24px;
+            letter-spacing: .02em;
+        }
+
+        /* ===== KPI GRID ===== */
         .kpi-grid {
-          grid-template-columns: 110px repeat(3, 1fr);
+            display: grid;
+            grid-template-columns: 180px repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 32px;
         }
-    
-        .charts-row {
-          grid-template-columns: 1fr;
+
+        .kpi-col-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--muted);
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
         }
-    
+
+        .kpi-row-label {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .kpi-row-label.total {
+            color: var(--accent);
+        }
+
         .kpi-card {
-          font-size: 13px;
-          padding: 12px 6px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 10px;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            transition: border-color .2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+        }
+
+        .kpi-card.liberado::before {
+            background: var(--accent2);
+        }
+
+        .kpi-card.empenhado::before {
+            background: var(--gold);
+        }
+
+        .kpi-card.liquidado::before {
+            background: var(--green);
+        }
+
+        .kpi-card.total-row {
+            background: linear-gradient(135deg, #0f2444, #162e52);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 20px 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-card h4 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .chart-card canvas {
+            max-height: 280px;
+        }
+
+        /* ===== CONTAINER COM ROLAGEM PARA O GRÁFICO DE BARRAS ===== */
+        .chart-scroll-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 8px;
+        }
+
+        .chart-scroll-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chart-scroll-wrapper::-webkit-scrollbar-track {
+            background: var(--surface);
+            border-radius: 4px;
+        }
+
+        .chart-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .chart-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--accent2);
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-toolbar span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .search-input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: var(--text);
+            font-size: 13px;
+            width: 220px;
+            transition: border-color .2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(5, 14, 29, .95);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 11px 14px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        thead th:hover {
+            color: #fff;
+        }
+
+        thead th .sort-icon {
+            margin-left: 4px;
+            opacity: .4;
+        }
+
+        thead th.sorted .sort-icon {
+            opacity: 1;
+            color: var(--gold);
+        }
+
+        tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 194, 224, .04);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .num-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(0, 194, 224, .12);
+            color: var(--accent);
+        }
+
+        /* ===== LOADING ===== */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 60px 20px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #f87171;
+            font-size: 14px;
+        }
+
+        /* ===== YEAR FILTER ===== */
+        .year-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .year-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .year-btn.active,
+        .year-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== ÁRVORE EXPANSÍVEL ===== */
+        .tree-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .tree-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 16px;
+            background: rgba(5, 14, 29, .95);
+            border-bottom: 2px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--accent);
+        }
+
+        details.tree-area {
+            border-bottom: 1px solid var(--border);
+        }
+
+        details.tree-area:last-child {
+            border-bottom: none;
+        }
+
+        summary.tree-summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 16px;
+            user-select: none;
+            border-left: 3px solid transparent;
+            transition: background .15s;
+        }
+
+        summary.tree-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tree-summary>.tree-label {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            text-align: left;
+            padding-right: 12px;
+        }
+
+        .tree-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .tree-toggle::before {
+            content: '▸';
+            font-size: 10px;
+            display: inline-block;
+            transition: transform .15s;
+        }
+
+        details[open]>summary .tree-toggle::before {
+            transform: rotate(90deg);
+        }
+
+        /* NÍVEL 1 — ÁREA (ciano) */
+        .tree-area-summary {
+            background: rgba(0, 194, 224, .10);
+            border-left-color: var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--accent);
+        }
+
+        .tree-area-summary:hover {
+            background: rgba(0, 194, 224, .16);
+        }
+
+        .tree-area-summary .tree-toggle {
+            background: rgba(0, 194, 224, .18);
+            color: var(--accent);
+        }
+
+        .tree-children-area {
+            margin-left: 22px;
+            padding-left: 16px;
+            border-left: 2px solid rgba(0, 194, 224, .25);
+        }
+
+        .tree-children-grupo {
+            margin-left: 22px;
+            padding-left: 16px;
+            border-left: 2px dashed rgba(240, 165, 0, .35);
+        }
+
+        .tree-children-sub {
+            margin-left: 22px;
+            padding-left: 16px;
+            border-left: 2px dashed rgba(34, 197, 94, .35);
+        }
+
+        /* NÍVEL 2 — GRUPO (dourado) */
+        .tree-grupo-summary {
+            background: rgba(240, 165, 0, .05);
+            border-left-color: var(--gold);
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--text);
+        }
+
+        .tree-grupo-summary:hover {
+            background: rgba(240, 165, 0, .10);
+        }
+
+        .tree-grupo-summary .tree-toggle {
+            background: rgba(240, 165, 0, .16);
+            color: var(--gold);
+        }
+
+        /* NÍVEL 3 — SUB-GRUPO (verde) */
+        .tree-subgrupo-summary {
+            background: transparent;
+            border-left-color: var(--green);
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .tree-subgrupo-summary:hover {
+            background: rgba(34, 197, 94, .07);
+            color: var(--text);
+        }
+
+        .tree-subgrupo-summary .tree-toggle {
+            background: rgba(34, 197, 94, .14);
+            color: var(--green);
+        }
+
+        /* NÍVEL 4 — DESPESA */
+        .tree-leaf {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 16px 7px 4px;
+            font-size: 12.5px;
+            color: var(--muted);
+            border-top: 1px dashed var(--border);
+        }
+
+        .tree-leaf::before {
+            content: '•';
+            margin-right: 10px;
+            margin-left: 4px;
+            color: var(--border);
+        }
+
+        .tree-leaf:hover {
+            background: rgba(0, 194, 224, .04);
+            color: var(--text);
+        }
+
+        .tree-label {
+            flex: 1;
+            text-align: left;
+            padding-right: 12px;
+        }
+
+        .tree-values {
+            display: flex;
+            gap: 0;
+            flex-shrink: 0;
         }
 
         .tree-values span {
-          width: 80px;
-          font-size: 11px;
+            width: 120px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
-    
-        .tree-children-area,
-        .tree-children-grupo,
-        .tree-children-sub {
-          margin-left: 12px;
-          padding-left: 10px;
+
+        /* ===== TOOLTIPS ===== */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
         }
-      }
+
+        [data-tooltip]::before,
+        [data-tooltip]::after {
+            position: absolute;
+            left: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .15s ease, transform .15s ease;
+            z-index: 100;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            bottom: calc(100% + 10px);
+            transform: translate(-50%, 4px);
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: normal;
+            max-width: 240px;
+            width: max-content;
+            box-shadow: var(--shadow);
+        }
+
+        [data-tooltip]::before {
+            content: '';
+            bottom: calc(100% + 4px);
+            transform: translate(-50%, 4px);
+            border: 6px solid transparent;
+            border-top-color: var(--accent);
+        }
+
+        [data-tooltip]:hover::before,
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: 110px repeat(3, 1fr);
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-card {
+                font-size: 13px;
+                padding: 12px 6px;
+            }
+
+            .tree-values span {
+                width: 80px;
+                font-size: 11px;
+            }
+
+            .tree-children-area,
+            .tree-children-grupo,
+            .tree-children-sub {
+                margin-left: 12px;
+                padding-left: 10px;
+            }
+
+            .chart-scroll-wrapper {
+                max-height: 300px;
+            }
+        }
+
+        /* ===== CORES PARA O GRÁFICO DE BARRAS HORIZONTAIS ===== */
+        .bar-color-0 {
+            background-color: #0066b3;
+        }
+        .bar-color-1 {
+            background-color: #0099cc;
+        }
+        .bar-color-2 {
+            background-color: #00b3b3;
+        }
+        .bar-color-3 {
+            background-color: #33cc99;
+        }
+        .bar-color-4 {
+            background-color: #66cc66;
+        }
+        .bar-color-5 {
+            background-color: #99cc33;
+        }
+        .bar-color-6 {
+            background-color: #cccc33;
+        }
+        .bar-color-7 {
+            background-color: #ffcc33;
+        }
+        .bar-color-8 {
+            background-color: #ff9933;
+        }
+        .bar-color-9 {
+            background-color: #ff6633;
+        }
+        .bar-color-10 {
+            background-color: #e64d2e;
+        }
+        .bar-color-11 {
+            background-color: #cc3333;
+        }
+        .bar-color-12 {
+            background-color: #b30059;
+        }
+        .bar-color-13 {
+            background-color: #990066;
+        }
+        .bar-color-14 {
+            background-color: #800080;
+        }
+        .bar-color-15 {
+            background-color: #4d0099;
+        }
+        .bar-color-16 {
+            background-color: #0033cc;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="banner"></div>
+    <div class="dashboard-container">
+        <div class="banner"></div>
 
-<div class="topbar">
-    <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
-    <div id="sync-badge"><span class="dot"></span> <span id="sync-text">Carregando dados…</span></div>
-</div>
-
-<div class="tabs">
-    <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
-    <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
-    <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
-    <button class="tab" data-tab="orcamento-aprovado">💰 Orçamento Aprovado</button>
-</div>
-
-<div id="visao" class="panel active">
-    <div class="panel-title">2026</div>
-
-    <div class="kpi-grid">
-        <div></div>
-        <div class="kpi-col-header" data-tooltip ="O Liberado é o orçamento autorizado pela Coordenação Geral de Planejamento da Fiocruz/Cogeplan e já descentralizado para o IRR.">Liberado<br> </div>
-        <div class="kpi-col-header" data-tooltip ="O Empenho é a etapa em que o governo reserva o dinheiro que será pago quando o bem for entregue ou o serviço concluído.">Empenhado<br> </div>
-        <div class="kpi-col-header" data-tooltip ="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">Liquidado<br> </div>
-        
-        <div class="kpi-row-label" data-tooltip="Despesas de Custeio: despesas necessárias para manutenção e funcionamento dos serviços públicos em geral.">Custeio</div>
-        <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
-        <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
-        <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
-        
-        <div class="kpi-row-label" data-tooltip ="Despesas de Capital: despesas que contribuem, diretamente, para a formação ou aquisição de um bem de capital.">Capital</div>
-        <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cap-lib">–</div></div>
-        <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cap-emp">–</div></div>
-        <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cap-liq">–</div></div>
-        
-        <div class="kpi-row-label total">Total Geral</div>
-        <div class="kpi-card total-row liberado"><div class="kpi-label">Liberado</div><div id="tot-lib">–</div></div>
-        <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="tot-emp">–</div></div>
-        <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="tot-liq">–</div></div>
-    </div>
-
-    <div class="charts-row">
-        <div class="chart-card">
-            <h4>Histórico do Orçamento de Custeio Liberado para o IRR</h4>
-            <canvas id="chart-custeio"></canvas>
-        </div>
-        <div class="chart-card">
-            <h4>Histórico do Orçamento de Capital Liberado para o IRR</h4>
-            <canvas id="chart-capital"></canvas>
-        </div>
-    </div>
-</div>
-
-<div id="detalhamento" class="panel">
-    <div class="panel-title"> </div>
-    <div id="loader-det" class="loader"><div class="spinner"></div> Carregando detalhamento…</div>
-
-    <div id="det-content" style="display:none">
-        <div class="kpi-grid">
-            <div></div>
-            <div class="kpi-col-header" data-tooltip ="O Previsto é a estimativa do orçamento necessário para as despesas programadas para o IRR.">Previsto</div>
-            <div class="kpi-col-header" data-tooltip ="O Empenho é a etapa em que o governo reserva o dinheiro que será pago.">Empenhado</div>
-            <div class="kpi-col-header" data-tooltip ="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">Liquidado</div>
-
-            <div class="kpi-row-label" data-tooltip ="Atividades de suporte administrativo e operacional.">Apoio à Área Finalística</div>
-            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-apoio-prev">–</div></div>
-            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-apoio-emp">–</div></div>
-            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-apoio-liq">–</div></div>
-
-            <div class="kpi-row-label" data-tooltip ="Ações diretamente relacionadas à missão institucional da Fiocruz.">Área Finalística</div>
-            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-fin-prev">–</div></div>
-            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-fin-emp">–</div></div>
-            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-fin-liq">–</div></div>
-
-            <div class="kpi-row-label" data-tooltip ="Iniciativas estratégicas e transversais.">Área Institucional</div>
-            <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-inst-prev">–</div></div>
-            <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-inst-emp">–</div></div>
-            <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-inst-liq">–</div></div>
-
-            <div class="kpi-row-label total">Total</div>
-            <div class="kpi-card total-row liberado"><div class="kpi-label">Previsto</div><div id="det-tot-prev">–</div></div>
-            <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="det-tot-emp">–</div></div>
-            <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="det-tot-liq">–</div></div>
+        <div class="topbar">
+            <span class="topbar-title">Painel de Controle Orçamentário · Fiocruz Minas</span>
+            <div id="sync-badge"><span class="dot"></span> <span id="sync-text">Carregando dados…</span></div>
         </div>
 
-        <div class="chart-card" style="margin-bottom:24px">
-            <h4>Despesas por Grupo — Previsto x Empenhado x Liquidado</h4>
-            <canvas id="chart-grupos" style="max-height:340px"></canvas>
+        <div class="tabs">
         </div>
 
-        <div class="tree-wrap">
-            <div class="tree-header">
-                <span>Grupos / Sub-grupo / Despesa</span>
-                <span class="tree-values"><span>Previsto</span><span>Empenhado</span><span>Liquidado</span></span>
-            </div>
-            <div id="arvore-detalhamento"></div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
+            <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
+            <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
+            <button class="tab" data-tab="orcamento-aprovado">💰 Orçamento Aprovado</button>
         </div>
-    </div>
-</div>
 
-<div id="aporte" class="panel">
-    <div class="panel-title">Aporte Indireto à Pesquisa</div>
+        <div id="visao" class="panel active">
+            <div class="panel-title">2026</div>
 
-    <div class="chart-card" style="margin-bottom: 24px;">
-        <h4>Histórico do Aporte Indireto à Pesquisa</h4>
-        <canvas id="chart-aporte-hist" style="max-height: 340px;"></canvas>
-    </div>
-
-    <div class="chart-card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h4>Aporte Indireto por Grupo de Pesquisa</h4>
-            <div class="year-filter" id="filter-ano-grupo" style="margin-bottom: 0;"></div>
-        </div>
-        <canvas id="chart-aporte-grupo" style="max-height: 340px;"></canvas>
-    </div>
-
-    <div class="chart-card" style="margin-bottom: 24px;">
-        <h4>Aporte Indireto por Grupo de Pesquisa - 2026</h4>
-        <canvas id="chart-aporte-2026" style="max-height: 340px;"></canvas>
-    </div>
-
-    <div class="chart-card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
-            <h4>Aporte Indireto por Grupo de Pesquisa - Ano X Despesa</h4>
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <div>
-                    <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Categoria:</label>
-                    <select id="g4-categoria" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+            <div class="kpi-grid">
+                <div></div>
+                <div class="kpi-col-header"
+                    data-tooltip="O Liberado é o orçamento autorizado pela Coordenação Geral de Planejamento da Fiocruz/Cogeplan e já descentralizado para o IRR.">
+                    Liberado<br> </div>
+                <div class="kpi-col-header"
+                    data-tooltip="O Empenho é a etapa em que o governo reserva o dinheiro que será pago quando o bem for entregue ou o serviço concluído.">
+                    Empenhado<br> </div>
+                <div class="kpi-col-header"
+                    data-tooltip="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">
+                    Liquidado<br>
                 </div>
-                <div>
-                    <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Ano:</label>
-                    <select id="g4-ano" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+
+                <div class="kpi-row-label"
+                    data-tooltip="Despesas de Custeio: despesas necessárias para manutenção e funcionamento dos serviços públicos em geral.">
+                    Custeio</div>
+                <div class="kpi-card liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="cust-lib">–</div>
+                </div>
+                <div class="kpi-card empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="cust-emp">–</div>
+                </div>
+                <div class="kpi-card liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="cust-liq">–</div>
+                </div>
+
+                <div class="kpi-row-label"
+                    data-tooltip="Despesas de Capital: despesas que contribuem, diretamente, para a formação ou aquisição de um bem de capital.">
+                    Capital</div>
+                <div class="kpi-card liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="cap-lib">–</div>
+                </div>
+                <div class="kpi-card empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="cap-emp">–</div>
+                </div>
+                <div class="kpi-card liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="cap-liq">–</div>
+                </div>
+
+                <div class="kpi-row-label total">Total Geral</div>
+                <div class="kpi-card total-row liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="tot-lib">–</div>
+                </div>
+                <div class="kpi-card total-row empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="tot-emp">–</div>
+                </div>
+                <div class="kpi-card total-row liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="tot-liq">–</div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-card">
+                    <h4>Histórico do Orçamento de Custeio Liberado para o IRR</h4>
+                    <canvas id="chart-custeio"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Histórico do Orçamento de Capital Liberado para o IRR</h4>
+                    <canvas id="chart-capital"></canvas>
                 </div>
             </div>
         </div>
-        <canvas id="chart-aporte-ano-desp" style="max-height: 340px;"></canvas>
-    </div>
 
-    <div class="chart-card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
-            <h4>Aporte Indireto - Grupo de Pesquisa X Ano X Despesa</h4>
-            <div style="display: flex; gap: 24px;">
-                <div>
-                    <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Grupos</label>
-                    <select id="g5-grupo" class="search-input" style="width: 150px; padding: 4px 8px;"></select>
+        <div id="detalhamento" class="panel">
+            <div class="panel-title"> </div>
+            <div id="loader-det" class="loader">
+                <div class="spinner"></div> Carregando detalhamento…
+            </div>
+
+            <div id="det-content" style="display:none">
+                <div class="kpi-grid">
+                    <div></div>
+                    <div class="kpi-col-header"
+                        data-tooltip="O Previsto é a estimativa do orçamento necessário para as despesas programadas para o IRR.">
+                        Previsto</div>
+                    <div class="kpi-col-header"
+                        data-tooltip="O Empenho é a etapa em que o governo reserva o dinheiro que será pago.">Empenhado
+                    </div>
+                    <div class="kpi-col-header"
+                        data-tooltip="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">
+                        Liquidado
+                    </div>
+
+                    <div class="kpi-row-label" data-tooltip="Atividades de suporte administrativo e operacional.">Apoio
+                        à
+                        Área Finalística</div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-apoio-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-apoio-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-apoio-liq">–</div>
+                    </div>
+
+                    <div class="kpi-row-label"
+                        data-tooltip="Ações diretamente relacionadas à missão institucional da Fiocruz.">Área
+                        Finalística
+                    </div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-fin-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-fin-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-fin-liq">–</div>
+                    </div>
+
+                    <div class="kpi-row-label" data-tooltip="Iniciativas estratégicas e transversais.">Área
+                        Institucional
+                    </div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-inst-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-inst-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-inst-liq">–</div>
+                    </div>
+
+                    <div class="kpi-row-label total">Total</div>
+                    <div class="kpi-card total-row liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-tot-prev">–</div>
+                    </div>
+                    <div class="kpi-card total-row empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-tot-emp">–</div>
+                    </div>
+                    <div class="kpi-card total-row liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-tot-liq">–</div>
+                    </div>
                 </div>
-                <div>
-                    <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Ano</label>
-                    <div id="g5-anos-wrap" style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text);"></div>
+
+                <div class="chart-card" style="margin-bottom:24px">
+                    <h4>Despesas por Grupo — Previsto x Empenhado x Liquidado</h4>
+                    <canvas id="chart-grupos" style="max-height:340px"></canvas>
+                </div>
+
+                <div class="tree-wrap">
+                    <div class="tree-header">
+                        <span>Grupos / Sub-grupo / Despesa</span>
+                        <span
+                            class="tree-values"><span>Previsto</span><span>Empenhado</span><span>Liquidado</span></span>
+                    </div>
+                    <div id="arvore-detalhamento"></div>
                 </div>
             </div>
         </div>
-        <canvas id="chart-aporte-grupo-ano-desp" style="max-height: 340px;"></canvas>
-    </div>
-</div>
 
-<div id="orcamento-aprovado" class="panel">
-    <div style="margin-bottom: 20px;">
-        <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Aprovado</h2>
-        <p style="color: var(--muted); font-size: 14px;">Visão consolidada e detalhada dos recursos aprovados por setor.</p>
-    </div>
+        <div id="aporte" class="panel">
+            <div class="panel-title">Aporte Indireto à Pesquisa</div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div class="chart-card">
-            <h4>Orçamento Aprovado por Elemento de Despesa (ED)</h4>
-            <canvas id="chart-orcamento-ed" style="max-height: 250px;"></canvas>
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <h4>Histórico do Aporte Indireto à Pesquisa</h4>
+                <canvas id="chart-aporte-hist" style="max-height: 340px;"></canvas>
+            </div>
+
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h4>Aporte Indireto por Grupo de Pesquisa</h4>
+                    <div class="year-filter" id="filter-ano-grupo" style="margin-bottom: 0;"></div>
+                </div>
+                <canvas id="chart-aporte-grupo" style="max-height: 340px;"></canvas>
+            </div>
+
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <h4>Aporte Indireto por Grupo de Pesquisa - 2026</h4>
+                <canvas id="chart-aporte-2026" style="max-height: 340px;"></canvas>
+            </div>
+
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+                    <h4>Aporte Indireto por Grupo de Pesquisa - Ano X Despesa</h4>
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <div>
+                            <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Categoria:</label>
+                            <select id="g4-categoria" class="search-input"
+                                style="width: auto; padding: 4px 8px;"></select>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Ano:</label>
+                            <select id="g4-ano" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="chart-aporte-ano-desp" style="max-height: 340px;"></canvas>
+            </div>
+
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+                    <h4>Aporte Indireto - Grupo de Pesquisa X Ano X Despesa</h4>
+                    <div style="display: flex; gap: 24px;">
+                        <div>
+                            <label
+                                style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Grupos</label>
+                            <select id="g5-grupo" class="search-input" style="width: 150px; padding: 4px 8px;"></select>
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Ano</label>
+                            <div id="g5-anos-wrap"
+                                style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="chart-aporte-grupo-ano-desp" style="max-height: 340px;"></canvas>
+            </div>
         </div>
-        <div class="chart-card">
-            <h4>% Execução Orçamentária por Setor (Empenhado / Ajustado)</h4>
-            <canvas id="chart-execucao-setor" style="max-height: 250px;"></canvas>
+
+        <div id="orcamento-aprovado" class="panel">
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Aprovado</h2>
+                <p style="color: var(--muted); font-size: 14px;">Visão consolidada e detalhada dos recursos aprovados
+                    por
+                    setor.</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div class="chart-card">
+                    <h4>Orçamento Aprovado por Elemento de Despesa (ED)</h4>
+                    <canvas id="chart-orcamento-ed" style="max-height: 250px;"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>% Execução Orçamentária por Setor (Empenhado / Ajustado)</h4>
+                    <!-- Wrapper com rolagem para o gráfico de barras -->
+                    <div class="chart-scroll-wrapper">
+                        <canvas id="chart-execucao-setor"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tree-wrap">
+                <div class="tree-header" style="padding-right: 20px;">
+                    <span>Setor Responsável / Despesa / Elemento (ED)</span>
+                    <span class="tree-values" style="width: auto; gap: 0;">
+                        <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
+                        <span style="width: 160px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
+                        <span style="width: 130px; text-align: right; white-space: nowrap;">Despesa Ajustada</span>
+                        <span style="width: 130px; text-align: right; white-space: nowrap;">Empenhado</span>
+                        <span
+                            style="width: 130px; text-align: right; white-space: nowrap; color: var(--gold);">Liquidado</span>
+                        <span
+                            style="width: 130px; text-align: right; white-space: nowrap; color: var(--green);">Pago</span>
+                    </span>
+                </div>
+                <div id="arvore-orcamento-aprovado"></div>
+            </div>
         </div>
-    </div>
 
-    <div class="tree-wrap">
-        <div class="tree-header" style="padding-right: 20px;">
-            <span>Setor Responsável / Despesa / Elemento (ED)</span>
-            <span class="tree-values" style="width: auto; gap: 0;">
-                <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
-                <span style="width: 160px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
-                <span style="width: 130px; text-align: right; white-space: nowrap;">Despesa Ajustada</span>
-                <span style="width: 130px; text-align: right; white-space: nowrap;">Empenhado</span>
-                <span style="width: 130px; text-align: right; white-space: nowrap; color: var(--gold);">Liquidado</span>
-                <span style="width: 130px; text-align: right; white-space: nowrap; color: var(--green);">Pago</span>
-            </span>
-        </div>
-        <div id="arvore-orcamento-aprovado"></div>
-    </div>
-</div>
-
-<script>
-const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
-const GIDS = {
-    painel:   '61010976',
-    prop:     '0',
-    renomear: '1008333824'
-};
-
-function csvUrl(gid) {
-    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&cb=${Date.now()}`;
-}
-
-/* ===== CSV PARSER ===== */
-function parseCSV(text) {
-    const lines = text.split(/\r?\n/);
-    return lines.map(line => {
-        if (!line.trim()) return null;
-        const sep = (line.split(';').length > line.split(',').length) ? ';' : ',';
-        const cols = [];
-        let inQ = false, cur = '';
-        for (let i = 0; i < line.length; i++) {
-            const c = line[i];
-            if (c === '"') { inQ = !inQ; }
-            else if (c === sep && !inQ) { cols.push(cur.trim()); cur = ''; }
-            else { cur += c; }
-        }
-        cols.push(cur.trim());
-        return cols;
-    }).filter(Boolean);
-}
-
-async function fetchCSV(gid) {
-    const r = await fetch(csvUrl(gid), { cache: 'no-store' });
-    if (!r.ok) throw new Error(`HTTP ${r.status} ao carregar gid=${gid}`);
-    const t = await r.text();
-    return parseCSV(t);
-}
-
-function limparNum(s) {
-    if (s === null || s === undefined) return 0;
-    if (typeof s === 'number') return s;
-    let str = String(s).trim();
-    if (!str || str === '-') return 0;
-    str = str.replace(/[^\d.,-]/g, '');
-    if (!str) return 0;
-    const temVirgula = str.indexOf(',') > -1;
-    const temPonto   = str.indexOf('.') > -1;
-    if (temVirgula && temPonto) {
-        str = str.replace(/\./g, '').replace(',', '.');
-    } else if (temVirgula) {
-        str = str.replace(',', '.');
-    }
-    const n = parseFloat(str);
-    return isNaN(n) ? 0 : n;
-}
-
-function fmt(v) {
-    if (typeof v === 'string' && v.includes('R$')) return v;
-    const n = typeof v === 'number' ? v : limparNum(v);
-    if(n === 0) return '-';
-    return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-
-/* ===== TABS ===== */
-document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-        
-        const syncText = document.getElementById('sync-text');
-        if (btn.dataset.tab === 'aporte') {
-            syncText.textContent = 'Sincronizado: 30/03/2026';
-        } else {
-            syncText.textContent = window.textoSyncGeral;
-        }
-    });
-});
-
-/* ===== ESTADO GLOBAL ===== */
-let chartCusteio = null, chartCapital = null, chartGrupos = null;
-let chartOrcamentoED = null, chartExecucaoSetor = null; 
-
-/* ===== INIT ===== */
-window.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const [csvPainel, csvProp, csvRenomear] = await Promise.all([
-            fetchCSV(GIDS.painel),
-            fetchCSV(GIDS.prop),
-            fetchCSV(GIDS.renomear)
-        ]);
-
-        renderKPIs(csvPainel);
-        renderGraficos(csvPainel);
-        renderDetalhamento(csvProp);
-        renderAporteIndireto(csvPainel);
-        
-        // Chamada ativada para carregar a aba nova e os gráficos
-        renderOrcamentoAprovado(csvRenomear);
-
-        const agora = new Date();
-        window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
-        
-        document.getElementById('sync-text').textContent = window.textoSyncGeral;
-        document.querySelector('.dot').style.background = '#22c55e';
-
-    } catch (e) {
-        console.error(e);
-        document.getElementById('sync-text').textContent = 'Erro ao carregar dados';
-        document.querySelector('.dot').style.background = '#f87171';
-    }
-});
-
-/* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
-function renderOrcamentoAprovado(rows) {
-    const wrap = document.getElementById('arvore-orcamento-aprovado');
-    wrap.innerHTML = '';
-
-    const setores = {};
-    const dadosED = {};
-
-    rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length < 8) return;
-
-        let setor = (cols[0] || '').trim().toUpperCase();
-        if (!setor) return;
-
-        const despesa    = (cols[1] || '').trim();
-        const prevInit   = limparNum(cols[2]);
-        const aprovDiret = limparNum(cols[3]);
-        const despAjust  = limparNum(cols[4]);
-        const empenhado  = limparNum(cols[5]);
-        const liquidado  = limparNum(cols[6]);
-        const pago       = limparNum(cols[7]);
-        const ed         = (cols[8] || '').trim(); 
-
-        if (!setores[setor]) {
-            setores[setor] = {
-                totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
+        <script>
+            const SHEET_ID = '1MShTFXt9pjHbH1ykk5B0AHSMa3fTg-PSUHU-igVRPBo';
+            const GIDS = {
+                painel: '61010976',
+                prop: '0',
+                renomear: '1008333824'
             };
-        }
 
-        setores[setor].totPrev  += prevInit;
-        setores[setor].totAprov += aprovDiret;
-        setores[setor].totAjust += despAjust;
-        setores[setor].totEmp   += empenhado;
-        setores[setor].totLiq   += liquidado;
-        setores[setor].totPag   += pago;
+            function csvUrl(gid) {
+                return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&cb=${Date.now()}`;
+            }
 
-        setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+            /* ===== CSV PARSER ===== */
+            function parseCSV(text) {
+                const lines = text.split(/\r?\n/);
+                return lines.map(line => {
+                    if (!line.trim()) return null;
+                    const sep = (line.split(';').length > line.split(',').length) ? ';' : ',';
+                    const cols = [];
+                    let inQ = false, cur = '';
+                    for (let i = 0; i < line.length; i++) {
+                        const c = line[i];
+                        if (c === '"') { inQ = !inQ; } else if (c === sep && !inQ) { cols.push(cur.trim());
+                            cur = ''; } else { cur += c; }
+                    }
+                    cols.push(cur.trim());
+                    return cols;
+                }).filter(Boolean);
+            }
 
-        if (ed) {
-            const labelED = "ED " + ed;
-            dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
-        }
-    });
+            async function fetchCSV(gid) {
+                const r = await fetch(csvUrl(gid), { cache: 'no-store' });
+                if (!r.ok) throw new Error(`HTTP ${r.status} ao carregar gid=${gid}`);
+                const t = await r.text();
+                return parseCSV(t);
+            }
 
-    function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
-        return `
+            function limparNum(s) {
+                if (s === null || s === undefined) return 0;
+                if (typeof s === 'number') return s;
+                let str = String(s).trim();
+                if (!str || str === '-') return 0;
+                str = str.replace(/[^\d.,-]/g, '');
+                if (!str) return 0;
+                const temVirgula = str.indexOf(',') > -1;
+                const temPonto = str.indexOf('.') > -1;
+                if (temVirgula && temPonto) {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                } else if (temVirgula) {
+                    str = str.replace(',', '.');
+                }
+                const n = parseFloat(str);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function fmt(v) {
+                if (typeof v === 'string' && v.includes('R$')) return v;
+                const n = typeof v === 'number' ? v : limparNum(v);
+                if (n === 0) return '-';
+                return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            /* ===== TABS ===== */
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+
+                    const syncText = document.getElementById('sync-text');
+                    if (btn.dataset.tab === 'aporte') {
+                        syncText.textContent = 'Sincronizado: 30/03/2026';
+                    } else {
+                        syncText.textContent = window.textoSyncGeral;
+                    }
+                });
+            });
+
+            /* ===== ESTADO GLOBAL ===== */
+            let chartCusteio = null, chartCapital = null, chartGrupos = null;
+            let chartOrcamentoED = null, chartExecucaoSetor = null;
+
+            /* ===== INIT ===== */
+            window.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    const [csvPainel, csvProp, csvRenomear] = await Promise.all([
+                        fetchCSV(GIDS.painel),
+                        fetchCSV(GIDS.prop),
+                        fetchCSV(GIDS.renomear)
+                    ]);
+
+                    renderKPIs(csvPainel);
+                    renderGraficos(csvPainel);
+                    renderDetalhamento(csvProp);
+                    renderAporteIndireto(csvPainel);
+
+                    // Chamada ativada para carregar a aba nova e os gráficos
+                    renderOrcamentoAprovado(csvRenomear);
+
+                    const agora = new Date();
+                    window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
+
+                    document.getElementById('sync-text').textContent = window.textoSyncGeral;
+                    document.querySelector('.dot').style.background = '#22c55e';
+
+                } catch (e) {
+                    console.error(e);
+                    document.getElementById('sync-text').textContent = 'Erro ao carregar dados';
+                    document.querySelector('.dot').style.background = '#f87171';
+                }
+            });
+
+            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
+            function renderOrcamentoAprovado(rows) {
+                const wrap = document.getElementById('arvore-orcamento-aprovado');
+                wrap.innerHTML = '';
+
+                const setores = {};
+                const dadosED = {};
+
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 8) return;
+
+                    let setor = (cols[0] || '').trim().toUpperCase();
+                    if (!setor) return;
+
+                    const despesa = (cols[1] || '').trim();
+                    const prevInit = limparNum(cols[2]);
+                    const aprovDiret = limparNum(cols[3]);
+                    const despAjust = limparNum(cols[4]);
+                    const empenhado = limparNum(cols[5]);
+                    const liquidado = limparNum(cols[6]);
+                    const pago = limparNum(cols[7]);
+                    const ed = (cols[8] || '').trim();
+
+                    if (!setores[setor]) {
+                        setores[setor] = {
+                            totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
+                        };
+                    }
+
+                    setores[setor].totPrev += prevInit;
+                    setores[setor].totAprov += aprovDiret;
+                    setores[setor].totAjust += despAjust;
+                    setores[setor].totEmp += empenhado;
+                    setores[setor].totLiq += liquidado;
+                    setores[setor].totPag += pago;
+
+                    setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+
+                    if (ed) {
+                        const labelED = "ED " + ed;
+                        dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
+                    }
+                });
+
+                function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
+                    return `
             <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
                 <span style="width: 130px; text-align: right;">${fmt(p)}</span>
                 <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
@@ -1060,620 +1294,686 @@ function renderOrcamentoAprovado(rows) {
                 <span style="width: 130px; text-align: right;">${fmt(l)}</span>
                 <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
             </span>`;
-    }
+                }
 
-    Object.keys(setores).sort().forEach(setorNome => {
-        const grupo = setores[setorNome];
+                Object.keys(setores).sort().forEach(setorNome => {
+                    const grupo = setores[setorNome];
 
-        const setorDetails = document.createElement('details');
-        setorDetails.className = 'tree-area';
-        setorDetails.open = false;
+                    const setorDetails = document.createElement('details');
+                    setorDetails.className = 'tree-area';
+                    setorDetails.open = false;
 
-        const setorSummary = document.createElement('summary');
-        setorSummary.className = 'tree-summary';
-        setorSummary.style.background = 'transparent';
-        setorSummary.style.borderLeft = '3px solid var(--accent)';
-        setorSummary.style.fontWeight = '700';
-        setorSummary.style.fontSize = '14px';
-        setorSummary.style.color = '#ffffff';
+                    const setorSummary = document.createElement('summary');
+                    setorSummary.className = 'tree-summary';
+                    setorSummary.style.background = 'transparent';
+                    setorSummary.style.borderLeft = '3px solid var(--accent)';
+                    setorSummary.style.fontWeight = '700';
+                    setorSummary.style.fontSize = '14px';
+                    setorSummary.style.color = '#ffffff';
 
-        setorSummary.innerHTML = `
+                    setorSummary.innerHTML = `
             <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
         ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
-        setorDetails.appendChild(setorSummary);
+                    setorDetails.appendChild(setorSummary);
 
-        const despesasWrap = document.createElement('div');
-        despesasWrap.className = 'tree-children-area';
+                    const despesasWrap = document.createElement('div');
+                    despesasWrap.className = 'tree-children-area';
 
-        grupo.items.forEach(item => {
-            const leaf = document.createElement('div');
-            leaf.className = 'tree-leaf';
-            
-            const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
+                    grupo.items.forEach(item => {
+                        const leaf = document.createElement('div');
+                        leaf.className = 'tree-leaf';
 
-            leaf.innerHTML = `
+                        const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
+
+                        leaf.innerHTML = `
                 <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
             ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
-            despesasWrap.appendChild(leaf);
-        });
+                        despesasWrap.appendChild(leaf);
+                    });
 
-        setorDetails.appendChild(despesasWrap);
-        wrap.appendChild(setorDetails);
-    });
-
-    // ===== RENDERIZAÇÃO DOS DOIS GRÁFICOS =====
-    const gridStyle = { color: 'rgba(255,255,255,.06)' };
-    const tickColor = '#6a82a4';
-
-    const labelsED = Object.keys(dadosED).sort();
-    const valoresED = labelsED.map(key => dadosED[key]);
-
-    const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
-    if (chartOrcamentoED) chartOrcamentoED.destroy();
-    chartOrcamentoED = new Chart(ctxED, {
-        type: 'bar',
-        data: {
-            labels: labelsED,
-            datasets: [{
-                label: 'Despesa Ajustada',
-                data: valoresED,
-                backgroundColor: '#0077b6',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y', 
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v/1e3).toFixed(0) + 'k' } },
-                y: { grid: gridStyle, ticks: { color: '#ffffff' } }
-            }
-        }
-    });
-
-    const labelsSetores = Object.keys(setores).sort();
-    const porcentagensSetores = labelsSetores.map(setor => {
-        const s = setores[setor];
-        if (s.totAjust === 0) return 0;
-        return parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
-    });
-
-    const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
-    if (chartExecucaoSetor) chartExecucaoSetor.destroy();
-    chartExecucaoSetor = new Chart(ctxExec, {
-        type: 'bar',
-        data: {
-            labels: labelsSetores,
-            datasets: [{
-                label: '% Executado',
-                data: porcentagensSetores,
-                backgroundColor: '#22c55e',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { 
-                legend: { display: false },
-                tooltip: { callbacks: { label: context => context.raw + '%' } }
-            },
-            scales: {
-                x: { grid: gridStyle, ticks: { color: tickColor, autoSkip: false, maxRotation: 45 } },
-                y: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 }
-            }
-        }
-    });
-}
-
-/* ===== PANEL 1 — KPIs ===== */
-function renderKPIs(rows) {
-    const map = {
-        'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
-        'cap-lib':  0, 'cap-emp':  0, 'cap-liq':  0
-    };
-
-    rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length < 3) return;
-        
-        const tipo    = (cols[0] || '').trim();
-        const metrica = (cols[1] || '').toUpperCase();
-        const valor   = limparNum(cols[2]);
-
-        if (!tipo) return;
-
-        const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
-        const isEmp = metrica.includes('EMPENH');
-        const isLiq = metrica.includes('LIQUID');
-
-        if (tipo === 'Custeio') {
-            if (isDot) map['cust-lib'] = valor;
-            if (isEmp) map['cust-emp'] = valor;
-            if (isLiq) map['cust-liq'] = valor;
-        } else if (tipo === 'Capital') {
-            if (isDot) map['cap-lib'] = valor;
-            if (isEmp) map['cap-emp'] = valor;
-            if (isLiq) map['cap-liq'] = valor;
-        }
-    });
-
-    map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
-    map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
-    map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
-
-    Object.entries(map).forEach(([id, val]) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = fmt(val);
-    });
-}
-
-/* ===== PANEL 1 — GRÁFICOS ===== */
-function renderGraficos(rows) {
-    const anos = {};
-    
-    rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length < 6) return;
-        
-        const tipo = (cols[3] || '').trim();
-        const ano  = (cols[4] || '').trim().replace(/\.0$/, '');
-        const valor = limparNum(cols[5]);
-
-        if (!ano || !tipo) return;
-
-        if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
-        if (tipo === 'Custeio') anos[ano].Custeio += valor;
-        else if (tipo === 'Capital') anos[ano].Capital += valor;
-    });
-
-    const labels = Object.keys(anos).sort();
-    const custeio = labels.map(a => anos[a].Custeio);
-    const capital = labels.map(a => anos[a].Capital);
-
-    const grid = { color: 'rgba(255,255,255,.06)' };
-    const tickColor = '#6a82a4';
-
-    const ctx1 = document.getElementById('chart-custeio').getContext('2d');
-    if (chartCusteio) chartCusteio.destroy();
-    chartCusteio = new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [ { label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 } ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid, ticks: { color: tickColor } },
-                y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e6).toFixed(1) + 'M' } }
-            }
-        }
-    });
-
-    const ctx2 = document.getElementById('chart-capital').getContext('2d');
-    if (chartCapital) chartCapital.destroy();
-    chartCapital = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [ { label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 } ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid, ticks: { color: tickColor } },
-                y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v/1e3).toFixed(0) + 'k' } }
-            }
-        }
-    });
-}
-
-/* ===== PANEL 2 — DETALHAMENTO ===== */
-const AREA_ORDER  = ['Área-meio', 'Área Finalística', 'Área Institucional'];
-const AREA_LABELS = {
-    'Área-meio':          'Apoio à Área Finalística',
-    'Área Finalística':   'Área Finalística',
-    'Área Institucional': 'Área Institucional'
-};
-const AREA_IDS = { 'Área-meio': 'apoio', 'Área Finalística': 'fin', 'Área Institucional': 'inst' };
-
-function renderDetalhamento(rows) {
-    document.getElementById('loader-det').style.display = 'none';
-    document.getElementById('det-content').style.display = 'block';
-
-    const dados = parseDetalhamento(rows);
-    renderKPIsDetalhamento(dados);
-    renderChartGrupos(dados);
-    renderArvore(buildArvore(dados));
-}
-
-function parseDetalhamento(rows) {
-    const out = [];
-    rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length < 14) return;
-        const grupo     = (cols[1]  || '').trim();
-        const subgrupo  = (cols[2]  || '').trim();
-        const despesa   = (cols[6]  || '').trim();
-        const previsto  = limparNum(cols[7]);
-        const area      = (cols[10] || '').trim();
-        const empenhado = limparNum(cols[12]);
-        const liquidado = limparNum(cols[13]);
-        if (!area && !grupo) return;
-        out.push({ grupo, subgrupo, despesa, previsto, area, empenhado, liquidado });
-    });
-    return out;
-}
-
-function renderKPIsDetalhamento(dados) {
-    const sums = {};
-    AREA_ORDER.forEach(a => sums[a] = { previsto: 0, empenhado: 0, liquidado: 0 });
-
-    dados.forEach(r => {
-        if (!sums[r.area]) return;
-        sums[r.area].previsto  += r.previsto;
-        sums[r.area].empenhado += r.empenhado;
-        sums[r.area].liquidado += r.liquidado;
-    });
-
-    const total = { previsto: 0, empenhado: 0, liquidado: 0 };
-    AREA_ORDER.forEach(a => {
-        const id = AREA_IDS[a];
-        document.getElementById(`det-${id}-prev`).textContent = fmt(sums[a].previsto);
-        document.getElementById(`det-${id}-emp`).textContent  = fmt(sums[a].empenhado);
-        document.getElementById(`det-${id}-liq`).textContent  = fmt(sums[a].liquidado);
-        total.previsto  += sums[a].previsto;
-        total.empenhado += sums[a].empenhado;
-        total.liquidado += sums[a].liquidado;
-    });
-
-    document.getElementById('det-tot-prev').textContent = fmt(total.previsto);
-    document.getElementById('det-tot-emp').textContent  = fmt(total.empenhado);
-    document.getElementById('det-tot-liq').textContent  = fmt(total.liquidado);
-}
-
-function renderChartGrupos(dados) {
-    const agg = {};
-    dados.forEach(r => {
-        if (!r.grupo) return;
-        if (!agg[r.grupo]) agg[r.grupo] = { previsto: 0, empenhado: 0, liquidado: 0 };
-        agg[r.grupo].previsto  += r.previsto;
-        agg[r.grupo].empenhado += r.empenhado;
-        agg[r.grupo].liquidado += r.liquidado;
-    });
-
-    const labels     = Object.keys(agg);
-    const previstos  = labels.map(g => agg[g].previsto);
-    const empenhados = labels.map(g => agg[g].empenhado);
-    const liquidados = labels.map(g => agg[g].liquidado);
-
-    const grid = { color: 'rgba(255,255,255,.06)' };
-    const tickColor = '#6a82a4';
-
-    const ctx = document.getElementById('chart-grupos').getContext('2d');
-    if (chartGrupos) chartGrupos.destroy();
-    chartGrupos = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [
-                { label: 'Despesas Previstas',  data: previstos,  backgroundColor: '#e0605a', borderRadius: 4 },
-                { label: 'Despesas Empenhadas', data: empenhados, backgroundColor: '#4a7ebb', borderRadius: 4 },
-                { label: 'Despesas Liquidadas', data: liquidados, backgroundColor: '#f2994a', borderRadius: 4 }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
-            scales: {
-                x: { grid, ticks: { color: tickColor, autoSkip: false } },
-                y: { grid, ticks: { color: tickColor, callback: v => fmt(v) } }
-            }
-        }
-    });
-}
-
-function buildArvore(dados) {
-    const arvore = {};
-    AREA_ORDER.forEach(a => arvore[a] = {});
-
-    dados.forEach(r => {
-        if (!arvore[r.area]) return; 
-        const grupo = r.grupo || '(sem grupo)';
-        const sub   = r.subgrupo || '(sem sub-grupo)';
-        const desp  = r.despesa || '(sem despesa)';
-
-        if (!arvore[r.area][grupo]) arvore[r.area][grupo] = {};
-        if (!arvore[r.area][grupo][sub]) arvore[r.area][grupo][sub] = {};
-        if (!arvore[r.area][grupo][sub][desp]) arvore[r.area][grupo][sub][desp] = { previsto: 0, empenhado: 0, liquidado: 0 };
-
-        arvore[r.area][grupo][sub][desp].previsto  += r.previsto;
-        arvore[r.area][grupo][sub][desp].empenhado += r.empenhado;
-        arvore[r.area][grupo][sub][desp].liquidado += r.liquidado;
-    });
-    return arvore;
-}
-
-function somaTotais(lista) {
-    const t = { previsto: 0, empenhado: 0, liquidado: 0 };
-    lista.forEach(v => { t.previsto += v.previsto; t.empenhado += v.empenhado; t.liquidado += v.liquidado; });
-    return t;
-}
-
-function valoresHTML(t) {
-    return `<span class="tree-values"><span>${fmt(t.previsto)}</span><span>${fmt(t.empenhado)}</span><span>${fmt(t.liquidado)}</span></span>`;
-}
-
-function renderArvore(arvore) {
-    const wrap = document.getElementById('arvore-detalhamento');
-    wrap.innerHTML = '';
-
-    AREA_ORDER.forEach(areaKey => {
-        const grupos = arvore[areaKey] || {};
-        const gruposKeys = Object.keys(grupos).sort();
-        if (gruposKeys.length === 0) return;
-
-        const totaisGrupo = gruposKeys.map(g => somaTotais(
-            Object.values(grupos[g]).flatMap(sub => Object.values(sub))
-        ));
-        const totalArea = somaTotais(totaisGrupo);
-
-        const areaDetails = document.createElement('details');
-        areaDetails.className = 'tree-area';
-        areaDetails.open = true;
-
-        const areaSummary = document.createElement('summary');
-        areaSummary.className = 'tree-summary tree-area-summary';
-        areaSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` + valoresHTML(totalArea);
-        areaDetails.appendChild(areaSummary);
-
-        const gruposWrap = document.createElement('div');
-        gruposWrap.className = 'tree-children-area';
-
-        gruposKeys.forEach(grupoKey => {
-            const subgrupos = grupos[grupoKey];
-            const subKeys = Object.keys(subgrupos).sort();
-            const totalGrupo = somaTotais(subKeys.flatMap(s => Object.values(subgrupos[s])));
-
-            const grupoDetails = document.createElement('details');
-            grupoDetails.className = 'tree-grupo';
-
-            const grupoSummary = document.createElement('summary');
-            grupoSummary.className = 'tree-summary tree-grupo-summary';
-            grupoSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${grupoKey}</span>` + valoresHTML(totalGrupo);
-            grupoDetails.appendChild(grupoSummary);
-
-            const subsWrap = document.createElement('div');
-            subsWrap.className = 'tree-children-grupo';
-
-            subKeys.forEach(subKey => {
-                const despesas = subgrupos[subKey];
-                const despKeys = Object.keys(despesas).sort();
-                const totalSub = somaTotais(Object.values(despesas));
-
-                const subDetails = document.createElement('details');
-                subDetails.className = 'tree-subgrupo';
-
-                const subSummary = document.createElement('summary');
-                subSummary.className = 'tree-summary tree-subgrupo-summary';
-                subSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${subKey}</span>` + valoresHTML(totalSub);
-                subDetails.appendChild(subSummary);
-
-                const despWrap = document.createElement('div');
-                despWrap.className = 'tree-children-sub';
-
-                despKeys.forEach(despKey => {
-                    const v = despesas[despKey];
-                    const leaf = document.createElement('div');
-                    leaf.className = 'tree-leaf';
-                    leaf.innerHTML = `<span class="tree-label">${despKey}</span>` + valoresHTML(v);
-                    despWrap.appendChild(leaf);
+                    setorDetails.appendChild(despesasWrap);
+                    wrap.appendChild(setorDetails);
                 });
 
-                subDetails.appendChild(despWrap);
-                subsWrap.appendChild(subDetails);
-            });
+                // ===== GRÁFICO 1: Orçamento Aprovado por ED (ordenado do maior para o menor) =====
+                const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
+                const labelsED = sortedED.map(item => item[0]);
+                const valoresED = sortedED.map(item => item[1]);
 
-            grupoDetails.appendChild(subsWrap);
-            gruposWrap.appendChild(grupoDetails);
-        });
+                const gridStyle = { color: 'rgba(255,255,255,.06)' };
+                const tickColor = '#6a82a4';
 
-        areaDetails.appendChild(gruposWrap);
-        wrap.appendChild(areaDetails);
-    });
-}
+                const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
+                if (chartOrcamentoED) chartOrcamentoED.destroy();
+                chartOrcamentoED = new Chart(ctxED, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsED,
+                        datasets: [{
+                            label: 'Despesa Ajustada',
+                            data: valoresED,
+                            backgroundColor: '#0077b6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
+                            y: { grid: gridStyle, ticks: { color: '#ffffff' } }
+                        }
+                    }
+                });
 
-/* ===== PANEL 3 — APORTE INDIRETO ===== */
-let dadosAporte = [];
-let chartAporteHist = null, chartAporteGrupo = null, chartAporte2026 = null, chartG4 = null, chartG5 = null;
+                // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
+                // Coleta os dados e ordena do maior para o menor
+                const dadosSetores = Object.keys(setores).map(setor => {
+                    const s = setores[setor];
+                    const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
+                    return { setor, valor };
+                });
 
-const CAT_COLORS = {
-    'Almoxarifado': '#4e79a7',
-    'Biotério': '#f28e2b',
-    'Correios': '#e15759',
-    'Gases para pesquisa': '#76b7b2',
-    'Transporte Aéreo': '#59a14f',
-    'Veículos com motorista': '#edc948'
-};
+                // Ordena do maior para o menor
+                dadosSetores.sort((a, b) => b.valor - a.valor);
 
-function renderAporteIndireto(rows) {
-    dadosAporte = [];
-    rows.forEach((cols, i) => {
-        if (i === 0 || !cols || cols.length <= 24) return;
-        
-        const ano = (cols[20] || '').trim().replace(/\.0$/, ''); 
-        const und = (cols[21] || '').trim(); 
-        const categoria = (cols[23] || '').trim(); 
-        const total = limparNum(cols[24]); 
-        
-        if (ano && und && categoria && total > 0) {
-            dadosAporte.push({ ano, und, categoria, total });
-        }
-    });
+                const labelsSetores = dadosSetores.map(item => item.setor);
+                const valoresSetores = dadosSetores.map(item => item.valor);
 
-    renderChartAporteHist();
-    setupFilterChartAporteGrupo();
-    renderChartAporte2026();
-    setupChart4();
-    setupChart5();
-}
+                // Paleta de cores do exemplo (azul ao vermelho)
+                const paletaCores = [
+                    '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
+                    '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
+                    '#e64d2e', '#cc3333', '#b30059', '#990066', '#800080',
+                    '#4d0099', '#0033cc'
+                ];
 
-function agruparParaStacked(dados, xField, catField, sortXAscByTotal = false) {
-    let xLabels = [...new Set(dados.map(d => d[xField]))].sort();
-    const categorias = [...new Set(dados.map(d => d[catField]))].sort();
-    
-    if (sortXAscByTotal) {
-        const xTotals = {};
-        dados.forEach(d => { xTotals[d[xField]] = (xTotals[d[xField]] || 0) + d.total; });
-        xLabels.sort((a, b) => xTotals[a] - xTotals[b]);
-    }
-    
-    const datasets = categorias.map(cat => {
-        const data = xLabels.map(xVal => {
-            return dados.filter(d => d[xField] === xVal && d[catField] === cat).reduce((sum, d) => sum + d.total, 0);
-        });
-        return { label: cat, data: data, backgroundColor: CAT_COLORS[cat] || '#a0cbe8', borderWidth: 0 };
-    });
-    return { labels: xLabels, datasets };
-}
+                const coresSetores = labelsSetores.map((_, i) => paletaCores[i % paletaCores.length]);
 
-function renderChartAporteHist() {
-    const ctx = document.getElementById('chart-aporte-hist').getContext('2d');
-    if (chartAporteHist) chartAporteHist.destroy();
-    chartAporteHist = new Chart(ctx, {
-        type: 'bar',
-        data: agruparParaStacked(dadosAporte, 'ano', 'categoria'),
-        options: {
-            responsive: true,
-            scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
-            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
-        }
-    });
-}
+                const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
+                if (chartExecucaoSetor) chartExecucaoSetor.destroy();
 
-function setupFilterChartAporteGrupo() {
-    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
-    const btnWrap = document.getElementById('filter-ano-grupo');
-    btnWrap.innerHTML = '<button class="year-btn active" onclick="selecionarAnoG2(this, null)">(Tudo)</button>';
-    anos.forEach(ano => {
-        btnWrap.innerHTML += `<button class="year-btn" onclick="selecionarAnoG2(this, '${ano}')">${ano}</button>`;
-    });
-    renderChartAporteGrupo(null);
-}
+                // Aumenta a altura do canvas dinamicamente baseado na quantidade de itens
+                const canvasExec = document.getElementById('chart-execucao-setor');
+                const alturaBase = 30; // altura por barra
+                const alturaMinima = 250;
+                const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
+                canvasExec.style.height = alturaCalculada + 'px';
+                canvasExec.style.width = '100%';
 
-function selecionarAnoG2(btn, ano) {
-    document.querySelectorAll('#filter-ano-grupo .year-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderChartAporteGrupo(ano);
-}
+                chartExecucaoSetor = new Chart(ctxExec, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsSetores,
+                        datasets: [{
+                            label: '% Executado',
+                            data: valoresSetores,
+                            backgroundColor: coresSetores,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { 
+                                callbacks: { 
+                                    label: function(context) {
+                                        return context.raw + '%';
+                                    }
+                                } 
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                grid: gridStyle, 
+                                ticks: { color: tickColor, callback: v => v + '%' }, 
+                                max: 100 
+                            },
+                            y: { 
+                                grid: gridStyle, 
+                                ticks: { 
+                                    color: '#ffffff', 
+                                    autoSkip: false,
+                                    font: { size: 11 }
+                                } 
+                            }
+                        }
+                    }
+                });
+            }
 
-function renderChartAporteGrupo(anoFilter) {
-    const ctx = document.getElementById('chart-aporte-grupo').getContext('2d');
-    const filtrados = anoFilter ? dadosAporte.filter(d => d.ano === anoFilter) : dadosAporte;
-    if (chartAporteGrupo) chartAporteGrupo.destroy();
-    chartAporteGrupo = new Chart(ctx, {
-        type: 'bar',
-        data: agruparParaStacked(filtrados, 'und', 'categoria'),
-        options: {
-            responsive: true,
-            scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
-            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
-        }
-    });
-}
+            /* ===== PANEL 1 — KPIs ===== */
+            function renderKPIs(rows) {
+                const map = {
+                    'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
+                    'cap-lib': 0, 'cap-emp': 0, 'cap-liq': 0
+                };
 
-function renderChartAporte2026() {
-    const ctx = document.getElementById('chart-aporte-2026').getContext('2d');
-    const filtrados = dadosAporte.filter(d => d.ano === '2026');
-    if (chartAporte2026) chartAporte2026.destroy();
-    chartAporte2026 = new Chart(ctx, {
-        type: 'bar',
-        data: agruparParaStacked(filtrados, 'und', 'categoria', true),
-        options: {
-            responsive: true,
-            scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
-            plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
-        }
-    });
-}
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 3) return;
 
-function setupChart4() {
-    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
-    const categorias = [...new Set(dadosAporte.map(d => d.categoria))].sort();
-    const selAno = document.getElementById('g4-ano');
-    const selCat = document.getElementById('g4-categoria');
-    anos.forEach(a => selAno.add(new Option(a, a)));
-    categorias.forEach(c => selCat.add(new Option(c, c)));
-    if (anos.length > 0) selAno.value = anos[anos.length - 1];
-    selAno.addEventListener('change', renderChart4);
-    selCat.addEventListener('change', renderChart4);
-    renderChart4();
-}
+                    const tipo = (cols[0] || '').trim();
+                    const metrica = (cols[1] || '').toUpperCase();
+                    const valor = limparNum(cols[2]);
 
-function renderChart4() {
-    const ano = document.getElementById('g4-ano').value;
-    const cat = document.getElementById('g4-categoria').value;
-    const filtrados = dadosAporte.filter(d => d.ano === ano && d.categoria === cat);
-    const agg = {};
-    filtrados.forEach(d => { agg[d.und] = (agg[d.und] || 0) + d.total; });
-    const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
-    
-    const ctx = document.getElementById('chart-aporte-ano-desp').getContext('2d');
-    if (chartG4) chartG4.destroy();
-    chartG4 = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: sorted.map(i => i[0]), datasets: [{ label: cat, data: sorted.map(i => i[1]), backgroundColor: '#4e79a7' }] },
-        options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { ticks: { callback: v => fmt(v) } } } }
-    });
-}
+                    if (!tipo) return;
 
-function setupChart5() {
-    const grupos = [...new Set(dadosAporte.map(d => d.und))].sort();
-    const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
-    const selGrupo = document.getElementById('g5-grupo');
-    grupos.forEach(g => selGrupo.add(new Option(g, g)));
-    selGrupo.addEventListener('change', renderChart5);
+                    const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
+                    const isEmp = metrica.includes('EMPENH');
+                    const isLiq = metrica.includes('LIQUID');
 
-    const chkWrap = document.getElementById('g5-anos-wrap');
-    chkWrap.innerHTML = '<label><input type="checkbox" id="g5-chk-tudo" checked> (Tudo)</label>';
-    anos.forEach(a => { chkWrap.innerHTML += `<label><input type="checkbox" class="g5-chk-ano" value="${a}"> ${a}</label>`; });
+                    if (tipo === 'Custeio') {
+                        if (isDot) map['cust-lib'] = valor;
+                        if (isEmp) map['cust-emp'] = valor;
+                        if (isLiq) map['cust-liq'] = valor;
+                    } else if (tipo === 'Capital') {
+                        if (isDot) map['cap-lib'] = valor;
+                        if (isEmp) map['cap-emp'] = valor;
+                        if (isLiq) map['cap-liq'] = valor;
+                    }
+                });
 
-    document.getElementById('g5-chk-tudo').addEventListener('change', (e) => {
-        document.querySelectorAll('.g5-chk-ano').forEach(chk => chk.checked = false);
-        renderChart5();
-    });
-    document.querySelectorAll('.g5-chk-ano').forEach(chk => {
-        chk.addEventListener('change', () => { document.getElementById('g5-chk-tudo').checked = false; renderChart5(); });
-    });
-    renderChart5();
-}
+                map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
+                map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
+                map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
 
-function renderChart5() {
-    const grupo = document.getElementById('g5-grupo').value;
-    const chkTudo = document.getElementById('g5-chk-tudo').checked;
-    const anosSel = Array.from(document.querySelectorAll('.g5-chk-ano:checked')).map(c => c.value);
+                Object.entries(map).forEach(([id, val]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = fmt(val);
+                });
+            }
 
-    let filtrados = dadosAporte.filter(d => d.und === grupo);
-    if (!chkTudo && anosSel.length > 0) filtrados = filtrados.filter(d => anosSel.includes(d.ano));
+            /* ===== PANEL 1 — GRÁFICOS ===== */
+            function renderGraficos(rows) {
+                const anos = {};
 
-    const agg = {};
-    let totalGeral = 0;
-    filtrados.forEach(d => { agg[d.categoria] = (agg[d.categoria] || 0) + d.total; totalGeral += d.total; });
-    const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 6) return;
 
-    const labels = sorted.map(i => i[0]);
-    const data = sorted.map(i => i[1]);
-    labels.push('Total');
-    data.push(totalGeral);
+                    const tipo = (cols[3] || '').trim();
+                    const ano = (cols[4] || '').trim().replace(/\.0$/, '');
+                    const valor = limparNum(cols[5]);
 
-    const ctx = document.getElementById('chart-aporte-grupo-ano-desp').getContext('2d');
-    if (chartG5) chartG5.destroy();
-    chartG5 = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ data: data, backgroundColor: '#4e79a7' }] },
-        options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt(v) } } } }
-    });
-}
-</script>
+                    if (!ano || !tipo) return;
+
+                    if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
+                    if (tipo === 'Custeio') anos[ano].Custeio += valor;
+                    else if (tipo === 'Capital') anos[ano].Capital += valor;
+                });
+
+                const labels = Object.keys(anos).sort();
+                const custeio = labels.map(a => anos[a].Custeio);
+                const capital = labels.map(a => anos[a].Capital);
+
+                const grid = { color: 'rgba(255,255,255,.06)' };
+                const tickColor = '#6a82a4';
+
+                const ctx1 = document.getElementById('chart-custeio').getContext('2d');
+                if (chartCusteio) chartCusteio.destroy();
+                chartCusteio = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor } },
+                            y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e6).toFixed(1) + 'M' } }
+                        }
+                    }
+                });
+
+                const ctx2 = document.getElementById('chart-capital').getContext('2d');
+                if (chartCapital) chartCapital.destroy();
+                chartCapital = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor } },
+                            y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e3).toFixed(0) + 'k' } }
+                        }
+                    }
+                });
+            }
+
+            /* ===== PANEL 2 — DETALHAMENTO ===== */
+            const AREA_ORDER = ['Área-meio', 'Área Finalística', 'Área Institucional'];
+            const AREA_LABELS = {
+                'Área-meio': 'Apoio à Área Finalística',
+                'Área Finalística': 'Área Finalística',
+                'Área Institucional': 'Área Institucional'
+            };
+            const AREA_IDS = { 'Área-meio': 'apoio', 'Área Finalística': 'fin', 'Área Institucional': 'inst' };
+
+            function renderDetalhamento(rows) {
+                document.getElementById('loader-det').style.display = 'none';
+                document.getElementById('det-content').style.display = 'block';
+
+                const dados = parseDetalhamento(rows);
+                renderKPIsDetalhamento(dados);
+                renderChartGrupos(dados);
+                renderArvore(buildArvore(dados));
+            }
+
+            function parseDetalhamento(rows) {
+                const out = [];
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 14) return;
+                    const grupo = (cols[1] || '').trim();
+                    const subgrupo = (cols[2] || '').trim();
+                    const despesa = (cols[6] || '').trim();
+                    const previsto = limparNum(cols[7]);
+                    const area = (cols[10] || '').trim();
+                    const empenhado = limparNum(cols[12]);
+                    const liquidado = limparNum(cols[13]);
+                    if (!area && !grupo) return;
+                    out.push({ grupo, subgrupo, despesa, previsto, area, empenhado, liquidado });
+                });
+                return out;
+            }
+
+            function renderKPIsDetalhamento(dados) {
+                const sums = {};
+                AREA_ORDER.forEach(a => sums[a] = { previsto: 0, empenhado: 0, liquidado: 0 });
+
+                dados.forEach(r => {
+                    if (!sums[r.area]) return;
+                    sums[r.area].previsto += r.previsto;
+                    sums[r.area].empenhado += r.empenhado;
+                    sums[r.area].liquidado += r.liquidado;
+                });
+
+                const total = { previsto: 0, empenhado: 0, liquidado: 0 };
+                AREA_ORDER.forEach(a => {
+                    const id = AREA_IDS[a];
+                    document.getElementById(`det-${id}-prev`).textContent = fmt(sums[a].previsto);
+                    document.getElementById(`det-${id}-emp`).textContent = fmt(sums[a].empenhado);
+                    document.getElementById(`det-${id}-liq`).textContent = fmt(sums[a].liquidado);
+                    total.previsto += sums[a].previsto;
+                    total.empenhado += sums[a].empenhado;
+                    total.liquidado += sums[a].liquidado;
+                });
+
+                document.getElementById('det-tot-prev').textContent = fmt(total.previsto);
+                document.getElementById('det-tot-emp').textContent = fmt(total.empenhado);
+                document.getElementById('det-tot-liq').textContent = fmt(total.liquidado);
+            }
+
+            function renderChartGrupos(dados) {
+                const agg = {};
+                dados.forEach(r => {
+                    if (!r.grupo) return;
+                    if (!agg[r.grupo]) agg[r.grupo] = { previsto: 0, empenhado: 0, liquidado: 0 };
+                    agg[r.grupo].previsto += r.previsto;
+                    agg[r.grupo].empenhado += r.empenhado;
+                    agg[r.grupo].liquidado += r.liquidado;
+                });
+
+                const labels = Object.keys(agg);
+                const previstos = labels.map(g => agg[g].previsto);
+                const empenhados = labels.map(g => agg[g].empenhado);
+                const liquidados = labels.map(g => agg[g].liquidado);
+
+                const grid = { color: 'rgba(255,255,255,.06)' };
+                const tickColor = '#6a82a4';
+
+                const ctx = document.getElementById('chart-grupos').getContext('2d');
+                if (chartGrupos) chartGrupos.destroy();
+                chartGrupos = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Despesas Previstas', data: previstos, backgroundColor: '#e0605a', borderRadius: 4 },
+                            { label: 'Despesas Empenhadas', data: empenhados, backgroundColor: '#4a7ebb', borderRadius: 4 },
+                            { label: 'Despesas Liquidadas', data: liquidados, backgroundColor: '#f2994a', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor, autoSkip: false } },
+                            y: { grid, ticks: { color: tickColor, callback: v => fmt(v) } }
+                        }
+                    }
+                });
+            }
+
+            function buildArvore(dados) {
+                const arvore = {};
+                AREA_ORDER.forEach(a => arvore[a] = {});
+
+                dados.forEach(r => {
+                    if (!arvore[r.area]) return;
+                    const grupo = r.grupo || '(sem grupo)';
+                    const sub = r.subgrupo || '(sem sub-grupo)';
+                    const desp = r.despesa || '(sem despesa)';
+
+                    if (!arvore[r.area][grupo]) arvore[r.area][grupo] = {};
+                    if (!arvore[r.area][grupo][sub]) arvore[r.area][grupo][sub] = {};
+                    if (!arvore[r.area][grupo][sub][desp]) arvore[r.area][grupo][sub][desp] = { previsto: 0, empenhado: 0,
+                        liquidado: 0 };
+
+                    arvore[r.area][grupo][sub][desp].previsto += r.previsto;
+                    arvore[r.area][grupo][sub][desp].empenhado += r.empenhado;
+                    arvore[r.area][grupo][sub][desp].liquidado += r.liquidado;
+                });
+                return arvore;
+            }
+
+            function somaTotais(lista) {
+                const t = { previsto: 0, empenhado: 0, liquidado: 0 };
+                lista.forEach(v => { t.previsto += v.previsto; t.empenhado += v.empenhado; t.liquidado += v.liquidado; });
+                return t;
+            }
+
+            function valoresHTML(t) {
+                return `<span class="tree-values"><span>${fmt(t.previsto)}</span><span>${fmt(t.empenhado)}</span><span>${fmt(t.liquidado)}</span></span>`;
+            }
+
+            function renderArvore(arvore) {
+                const wrap = document.getElementById('arvore-detalhamento');
+                wrap.innerHTML = '';
+
+                AREA_ORDER.forEach(areaKey => {
+                    const grupos = arvore[areaKey] || {};
+                    const gruposKeys = Object.keys(grupos).sort();
+                    if (gruposKeys.length === 0) return;
+
+                    const totaisGrupo = gruposKeys.map(g => somaTotais(
+                        Object.values(grupos[g]).flatMap(sub => Object.values(sub))
+                    ));
+                    const totalArea = somaTotais(totaisGrupo);
+
+                    const areaDetails = document.createElement('details');
+                    areaDetails.className = 'tree-area';
+                    areaDetails.open = true;
+
+                    const areaSummary = document.createElement('summary');
+                    areaSummary.className = 'tree-summary tree-area-summary';
+                    areaSummary.innerHTML =
+                        `<span class="tree-label"><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` +
+                        valoresHTML(totalArea);
+                    areaDetails.appendChild(areaSummary);
+
+                    const gruposWrap = document.createElement('div');
+                    gruposWrap.className = 'tree-children-area';
+
+                    gruposKeys.forEach(grupoKey => {
+                        const subgrupos = grupos[grupoKey];
+                        const subKeys = Object.keys(subgrupos).sort();
+                        const totalGrupo = somaTotais(subKeys.flatMap(s => Object.values(subgrupos[s])));
+
+                        const grupoDetails = document.createElement('details');
+                        grupoDetails.className = 'tree-grupo';
+
+                        const grupoSummary = document.createElement('summary');
+                        grupoSummary.className = 'tree-summary tree-grupo-summary';
+                        grupoSummary.innerHTML =
+                            `<span class="tree-label"><span class="tree-toggle"></span>${grupoKey}</span>` +
+                            valoresHTML(totalGrupo);
+                        grupoDetails.appendChild(grupoSummary);
+
+                        const subsWrap = document.createElement('div');
+                        subsWrap.className = 'tree-children-grupo';
+
+                        subKeys.forEach(subKey => {
+                            const despesas = subgrupos[subKey];
+                            const despKeys = Object.keys(despesas).sort();
+                            const totalSub = somaTotais(Object.values(despesas));
+
+                            const subDetails = document.createElement('details');
+                            subDetails.className = 'tree-subgrupo';
+
+                            const subSummary = document.createElement('summary');
+                            subSummary.className = 'tree-summary tree-subgrupo-summary';
+                            subSummary.innerHTML =
+                                `<span class="tree-label"><span class="tree-toggle"></span>${subKey}</span>` +
+                                valoresHTML(totalSub);
+                            subDetails.appendChild(subSummary);
+
+                            const despWrap = document.createElement('div');
+                            despWrap.className = 'tree-children-sub';
+
+                            despKeys.forEach(despKey => {
+                                const v = despesas[despKey];
+                                const leaf = document.createElement('div');
+                                leaf.className = 'tree-leaf';
+                                leaf.innerHTML = `<span class="tree-label">${despKey}</span>` +
+                                valoresHTML(v);
+                                despWrap.appendChild(leaf);
+                            });
+
+                            subDetails.appendChild(despWrap);
+                            subsWrap.appendChild(subDetails);
+                        });
+
+                        grupoDetails.appendChild(subsWrap);
+                        gruposWrap.appendChild(grupoDetails);
+                    });
+
+                    areaDetails.appendChild(gruposWrap);
+                    wrap.appendChild(areaDetails);
+                });
+            }
+
+            /* ===== PANEL 3 — APORTE INDIRETO ===== */
+            let dadosAporte = [];
+            let chartAporteHist = null, chartAporteGrupo = null, chartAporte2026 = null, chartG4 = null, chartG5 = null;
+
+            const CAT_COLORS = {
+                'Almoxarifado': '#4e79a7',
+                'Biotério': '#f28e2b',
+                'Correios': '#e15759',
+                'Gases para pesquisa': '#76b7b2',
+                'Transporte Aéreo': '#59a14f',
+                'Veículos com motorista': '#edc948'
+            };
+
+            function renderAporteIndireto(rows) {
+                dadosAporte = [];
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length <= 24) return;
+
+                    const ano = (cols[20] || '').trim().replace(/\.0$/, '');
+                    const und = (cols[21] || '').trim();
+                    const categoria = (cols[23] || '').trim();
+                    const total = limparNum(cols[24]);
+
+                    if (ano && und && categoria && total > 0) {
+                        dadosAporte.push({ ano, und, categoria, total });
+                    }
+                });
+
+                renderChartAporteHist();
+                setupFilterChartAporteGrupo();
+                renderChartAporte2026();
+                setupChart4();
+                setupChart5();
+            }
+
+            function agruparParaStacked(dados, xField, catField, sortXAscByTotal = false) {
+                let xLabels = [...new Set(dados.map(d => d[xField]))].sort();
+                const categorias = [...new Set(dados.map(d => d[catField]))].sort();
+
+                if (sortXAscByTotal) {
+                    const xTotals = {};
+                    dados.forEach(d => { xTotals[d[xField]] = (xTotals[d[xField]] || 0) + d.total; });
+                    xLabels.sort((a, b) => xTotals[a] - xTotals[b]);
+                }
+
+                const datasets = categorias.map(cat => {
+                    const data = xLabels.map(xVal => {
+                        return dados.filter(d => d[xField] === xVal && d[catField] === cat).reduce((sum, d) => sum +
+                            d.total, 0);
+                    });
+                    return { label: cat, data: data, backgroundColor: CAT_COLORS[cat] || '#a0cbe8', borderWidth: 0 };
+                });
+                return { labels: xLabels, datasets };
+            }
+
+            function renderChartAporteHist() {
+                const ctx = document.getElementById('chart-aporte-hist').getContext('2d');
+                if (chartAporteHist) chartAporteHist.destroy();
+                chartAporteHist = new Chart(ctx, {
+                    type: 'bar',
+                    data: agruparParaStacked(dadosAporte, 'ano', 'categoria'),
+                    options: {
+                        responsive: true,
+                        scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+                        plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+                    }
+                });
+            }
+
+            function setupFilterChartAporteGrupo() {
+                const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+                const btnWrap = document.getElementById('filter-ano-grupo');
+                btnWrap.innerHTML = '<button class="year-btn active" onclick="selecionarAnoG2(this, null)">(Tudo)</button>';
+                anos.forEach(ano => {
+                    btnWrap.innerHTML +=
+                        `<button class="year-btn" onclick="selecionarAnoG2(this, '${ano}')">${ano}</button>`;
+                });
+                renderChartAporteGrupo(null);
+            }
+
+            function selecionarAnoG2(btn, ano) {
+                document.querySelectorAll('#filter-ano-grupo .year-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderChartAporteGrupo(ano);
+            }
+
+            function renderChartAporteGrupo(anoFilter) {
+                const ctx = document.getElementById('chart-aporte-grupo').getContext('2d');
+                const filtrados = anoFilter ? dadosAporte.filter(d => d.ano === anoFilter) : dadosAporte;
+                if (chartAporteGrupo) chartAporteGrupo.destroy();
+                chartAporteGrupo = new Chart(ctx, {
+                    type: 'bar',
+                    data: agruparParaStacked(filtrados, 'und', 'categoria'),
+                    options: {
+                        responsive: true,
+                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } },
+                            y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+                        plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+                    }
+                });
+            }
+
+            function renderChartAporte2026() {
+                const ctx = document.getElementById('chart-aporte-2026').getContext('2d');
+                const filtrados = dadosAporte.filter(d => d.ano === '2026');
+                if (chartAporte2026) chartAporte2026.destroy();
+                chartAporte2026 = new Chart(ctx, {
+                    type: 'bar',
+                    data: agruparParaStacked(filtrados, 'und', 'categoria', true),
+                    options: {
+                        responsive: true,
+                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } },
+                            y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+                        plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
+                    }
+                });
+            }
+
+            function setupChart4() {
+                const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+                const categorias = [...new Set(dadosAporte.map(d => d.categoria))].sort();
+                const selAno = document.getElementById('g4-ano');
+                const selCat = document.getElementById('g4-categoria');
+                anos.forEach(a => selAno.add(new Option(a, a)));
+                categorias.forEach(c => selCat.add(new Option(c, c)));
+                if (anos.length > 0) selAno.value = anos[anos.length - 1];
+                selAno.addEventListener('change', renderChart4);
+                selCat.addEventListener('change', renderChart4);
+                renderChart4();
+            }
+
+            function renderChart4() {
+                const ano = document.getElementById('g4-ano').value;
+                const cat = document.getElementById('g4-categoria').value;
+                const filtrados = dadosAporte.filter(d => d.ano === ano && d.categoria === cat);
+                const agg = {};
+                filtrados.forEach(d => { agg[d.und] = (agg[d.und] || 0) + d.total; });
+                const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+
+                const ctx = document.getElementById('chart-aporte-ano-desp').getContext('2d');
+                if (chartG4) chartG4.destroy();
+                chartG4 = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: sorted.map(i => i[0]), datasets: [{ label: cat, data: sorted.map(i => i[1]),
+                            backgroundColor: '#4e79a7' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false,
+                                maxRotation: 90, minRotation: 90 } }, y: { ticks: { callback: v => fmt(v) } } } }
+                });
+            }
+
+            function setupChart5() {
+                const grupos = [...new Set(dadosAporte.map(d => d.und))].sort();
+                const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+                const selGrupo = document.getElementById('g5-grupo');
+                grupos.forEach(g => selGrupo.add(new Option(g, g)));
+                selGrupo.addEventListener('change', renderChart5);
+
+                const chkWrap = document.getElementById('g5-anos-wrap');
+                chkWrap.innerHTML = '<label><input type="checkbox" id="g5-chk-tudo" checked> (Tudo)</label>';
+                anos.forEach(a => { chkWrap.innerHTML +=
+                        `<label><input type="checkbox" class="g5-chk-ano" value="${a}"> ${a}</label>`; });
+
+                document.getElementById('g5-chk-tudo').addEventListener('change', (e) => {
+                    document.querySelectorAll('.g5-chk-ano').forEach(chk => chk.checked = false);
+                    renderChart5();
+                });
+                document.querySelectorAll('.g5-chk-ano').forEach(chk => {
+                    chk.addEventListener('change', () => { document.getElementById('g5-chk-tudo').checked = false;
+                        renderChart5(); });
+                });
+                renderChart5();
+            }
+
+            function renderChart5() {
+                const grupo = document.getElementById('g5-grupo').value;
+                const chkTudo = document.getElementById('g5-chk-tudo').checked;
+                const anosSel = Array.from(document.querySelectorAll('.g5-chk-ano:checked')).map(c => c.value);
+
+                let filtrados = dadosAporte.filter(d => d.und === grupo);
+                if (!chkTudo && anosSel.length > 0) filtrados = filtrados.filter(d => anosSel.includes(d.ano));
+
+                const agg = {};
+                let totalGeral = 0;
+                filtrados.forEach(d => { agg[d.categoria] = (agg[d.categoria] || 0) + d.total;
+                    totalGeral += d.total; });
+                const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+
+                const labels = sorted.map(i => i[0]);
+                const data = sorted.map(i => i[1]);
+                labels.push('Total');
+                data.push(totalGeral);
+
+                const ctx = document.getElementById('chart-aporte-grupo-ano-desp').getContext('2d');
+                if (chartG5) chartG5.destroy();
+                chartG5 = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ data: data, backgroundColor: '#4e79a7' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt(v) } } } }
+                });
+            }
+        </script>
 </body>
+
 </html>
