@@ -35,6 +35,7 @@
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: #ffffff;
+            /* Deixa as laterais e o topo totalmente brancos */
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -46,10 +47,13 @@
         .dashboard-container {
             width: 100%;
             max-width: 1680px;
+            /* Aumentado de 1366px para 1440px para dar mais espaço e não cortar o texto */
             background: var(--bg);
             margin-top: 15px;
             margin-bottom: 30px;
+            /* Margem opcional para desgrudar do rodapé da página */
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            /* Sombra um pouco mais suave no fundo branco */
             border: 1px solid var(--border);
             border-radius: 4px;
             overflow: hidden;
@@ -161,6 +165,10 @@
             opacity: 1;
             box-shadow: 0 0 0 1px rgba(0, 194, 224, .3), 0 4px 16px rgba(0, 194, 224, .28);
             transform: translateY(-1px);
+        }
+
+        .tab.active:hover {
+            opacity: 1;
         }
 
         /* ===== CONTENT PANELS ===== */
@@ -301,6 +309,9 @@
             padding-right: 8px;
         }
 
+        /* Este gráfico tem altura dinâmica (definida via JS) para dar espaço entre as
+           barras/rótulos; a regra geral de max-height:280px do .chart-card canvas
+           não deve limitá-lo — quem controla o "recorte" visível é o wrapper acima. */
         .chart-scroll-wrapper canvas {
             max-height: none !important;
         }
@@ -319,7 +330,185 @@
             border-radius: 4px;
         }
 
-        /* ===== TABLE & TREE ===== */
+        .chart-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--accent2);
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-toolbar span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .search-input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: var(--text);
+            font-size: 13px;
+            width: 220px;
+            transition: border-color .2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(5, 14, 29, .95);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 11px 14px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        thead th:hover {
+            color: #fff;
+        }
+
+        thead th .sort-icon {
+            margin-left: 4px;
+            opacity: .4;
+        }
+
+        thead th.sorted .sort-icon {
+            opacity: 1;
+            color: var(--gold);
+        }
+
+        tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 194, 224, .04);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .num-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(0, 194, 224, .12);
+            color: var(--accent);
+        }
+
+        /* ===== LOADING ===== */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 60px 20px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #f87171;
+            font-size: 14px;
+        }
+
+        /* ===== YEAR FILTER ===== */
+        .year-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .year-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .year-btn.active,
+        .year-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== ÁRVORE EXPANSÍVEL ===== */
         .tree-wrap {
             background: var(--card);
             border: 1px solid var(--border);
@@ -344,6 +533,10 @@
 
         details.tree-area {
             border-bottom: 1px solid var(--border);
+        }
+
+        details.tree-area:last-child {
+            border-bottom: none;
         }
 
         summary.tree-summary {
@@ -392,11 +585,21 @@
             transform: rotate(90deg);
         }
 
+        /* NÍVEL 1 — ÁREA (ciano) */
         .tree-area-summary {
             background: rgba(0, 194, 224, .10);
             border-left-color: var(--accent);
             font-weight: 700;
             font-size: 14px;
+            color: var(--accent);
+        }
+
+        .tree-area-summary:hover {
+            background: rgba(0, 194, 224, .16);
+        }
+
+        .tree-area-summary .tree-toggle {
+            background: rgba(0, 194, 224, .18);
             color: var(--accent);
         }
 
@@ -418,6 +621,7 @@
             border-left: 2px dashed rgba(34, 197, 94, .35);
         }
 
+        /* NÍVEL 2 — GRUPO (dourado) */
         .tree-grupo-summary {
             background: rgba(240, 165, 0, .05);
             border-left-color: var(--gold);
@@ -426,6 +630,16 @@
             color: var(--text);
         }
 
+        .tree-grupo-summary:hover {
+            background: rgba(240, 165, 0, .10);
+        }
+
+        .tree-grupo-summary .tree-toggle {
+            background: rgba(240, 165, 0, .16);
+            color: var(--gold);
+        }
+
+        /* NÍVEL 3 — SUB-GRUPO (verde) */
         .tree-subgrupo-summary {
             background: transparent;
             border-left-color: var(--green);
@@ -434,6 +648,17 @@
             color: var(--muted);
         }
 
+        .tree-subgrupo-summary:hover {
+            background: rgba(34, 197, 94, .07);
+            color: var(--text);
+        }
+
+        .tree-subgrupo-summary .tree-toggle {
+            background: rgba(34, 197, 94, .14);
+            color: var(--green);
+        }
+
+        /* NÍVEL 4 — DESPESA */
         .tree-leaf {
             display: flex;
             justify-content: space-between;
@@ -451,6 +676,17 @@
             color: var(--border);
         }
 
+        .tree-leaf:hover {
+            background: rgba(0, 194, 224, .04);
+            color: var(--text);
+        }
+
+        .tree-label {
+            flex: 1;
+            text-align: left;
+            padding-right: 12px;
+        }
+
         .tree-values {
             display: flex;
             gap: 0;
@@ -463,6 +699,53 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* ===== TOOLTIPS ===== */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::before,
+        [data-tooltip]::after {
+            position: absolute;
+            left: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .15s ease, transform .15s ease;
+            z-index: 100;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            bottom: calc(100% + 10px);
+            transform: translate(-50%, 4px);
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: normal;
+            max-width: 240px;
+            width: max-content;
+            box-shadow: var(--shadow);
+        }
+
+        [data-tooltip]::before {
+            content: '';
+            bottom: calc(100% + 4px);
+            transform: translate(-50%, 4px);
+            border: 6px solid transparent;
+            border-top-color: var(--accent);
+        }
+
+        [data-tooltip]:hover::before,
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .kpi-grid {
@@ -472,6 +755,80 @@
             .charts-row {
                 grid-template-columns: 1fr;
             }
+
+            .kpi-card {
+                font-size: 13px;
+                padding: 12px 6px;
+            }
+
+            .tree-values span {
+                width: 80px;
+                font-size: 11px;
+            }
+
+            .tree-children-area,
+            .tree-children-grupo,
+            .tree-children-sub {
+                margin-left: 12px;
+                padding-left: 10px;
+            }
+
+            .chart-scroll-wrapper {
+                max-height: 300px;
+            }
+        }
+
+        /* ===== CORES PARA O GRÁFICO DE BARRAS HORIZONTAIS ===== */
+        .bar-color-0 {
+            background-color: #0066b3;
+        }
+        .bar-color-1 {
+            background-color: #0099cc;
+        }
+        .bar-color-2 {
+            background-color: #00b3b3;
+        }
+        .bar-color-3 {
+            background-color: #33cc99;
+        }
+        .bar-color-4 {
+            background-color: #66cc66;
+        }
+        .bar-color-5 {
+            background-color: #99cc33;
+        }
+        .bar-color-6 {
+            background-color: #cccc33;
+        }
+        .bar-color-7 {
+            background-color: #ffcc33;
+        }
+        .bar-color-8 {
+            background-color: #ff9933;
+        }
+        .bar-color-9 {
+            background-color: #ff6633;
+        }
+        .bar-color-10 {
+            background-color: #e64d2e;
+        }
+        .bar-color-11 {
+            background-color: #cc3333;
+        }
+        .bar-color-12 {
+            background-color: #b30059;
+        }
+        .bar-color-13 {
+            background-color: #990066;
+        }
+        .bar-color-14 {
+            background-color: #800080;
+        }
+        .bar-color-15 {
+            background-color: #4d0099;
+        }
+        .bar-color-16 {
+            background-color: #0033cc;
         }
     </style>
 </head>
@@ -487,36 +844,77 @@
         </div>
 
         <div class="tabs">
+        </div>
+
+
+        <div class="tabs">
             <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
             <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
             <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
             <button class="tab" data-tab="orcamento-aprovado">💰 Orçamento Aprovado</button>
         </div>
 
-        <!-- ABA 1: VISÃO GERAL -->
         <div id="visao" class="panel active">
             <div class="panel-title">2026</div>
 
             <div class="kpi-grid">
                 <div></div>
-                <div class="kpi-col-header">Liberado<br></div>
-                <div class="kpi-col-header">Empenhado<br></div>
-                <div class="kpi-col-header">Liquidado<br></div>
+                <div class="kpi-col-header"
+                    data-tooltip="O Liberado é o orçamento autorizado pela Coordenação Geral de Planejamento da Fiocruz/Cogeplan e já descentralizado para o IRR.">
+                    Liberado<br> </div>
+                <div class="kpi-col-header"
+                    data-tooltip="O Empenho é a etapa em que o governo reserva o dinheiro que será pago quando o bem for entregue ou o serviço concluído.">
+                    Empenhado<br> </div>
+                <div class="kpi-col-header"
+                    data-tooltip="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">
+                    Liquidado<br>
+                </div>
 
-                <div class="kpi-row-label">Custeio</div>
-                <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cust-lib">–</div></div>
-                <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cust-emp">–</div></div>
-                <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cust-liq">–</div></div>
+                <div class="kpi-row-label"
+                    data-tooltip="Despesas de Custeio: despesas necessárias para manutenção e funcionamento dos serviços públicos em geral.">
+                    Custeio</div>
+                <div class="kpi-card liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="cust-lib">–</div>
+                </div>
+                <div class="kpi-card empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="cust-emp">–</div>
+                </div>
+                <div class="kpi-card liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="cust-liq">–</div>
+                </div>
 
-                <div class="kpi-row-label">Capital</div>
-                <div class="kpi-card liberado"><div class="kpi-label">Liberado</div><div id="cap-lib">–</div></div>
-                <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="cap-emp">–</div></div>
-                <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="cap-liq">–</div></div>
+                <div class="kpi-row-label"
+                    data-tooltip="Despesas de Capital: despesas que contribuem, diretamente, para a formação ou aquisição de um bem de capital.">
+                    Capital</div>
+                <div class="kpi-card liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="cap-lib">–</div>
+                </div>
+                <div class="kpi-card empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="cap-emp">–</div>
+                </div>
+                <div class="kpi-card liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="cap-liq">–</div>
+                </div>
 
                 <div class="kpi-row-label total">Total Geral</div>
-                <div class="kpi-card total-row liberado"><div class="kpi-label">Liberado</div><div id="tot-lib">–</div></div>
-                <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="tot-emp">–</div></div>
-                <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="tot-liq">–</div></div>
+                <div class="kpi-card total-row liberado">
+                    <div class="kpi-label">Liberado</div>
+                    <div id="tot-lib">–</div>
+                </div>
+                <div class="kpi-card total-row empenhado">
+                    <div class="kpi-label">Empenhado</div>
+                    <div id="tot-emp">–</div>
+                </div>
+                <div class="kpi-card total-row liquidado">
+                    <div class="kpi-label">Liquidado</div>
+                    <div id="tot-liq">–</div>
+                </div>
             </div>
 
             <div class="charts-row">
@@ -531,37 +929,88 @@
             </div>
         </div>
 
-        <!-- ABA 2: DETALHAMENTO -->
         <div id="detalhamento" class="panel">
-            <div class="panel-title"></div>
-            <div id="loader-det" class="loader"><div class="spinner"></div> Carregando detalhamento…</div>
+            <div class="panel-title"> </div>
+            <div id="loader-det" class="loader">
+                <div class="spinner"></div> Carregando detalhamento…
+            </div>
 
             <div id="det-content" style="display:none">
                 <div class="kpi-grid">
                     <div></div>
-                    <div class="kpi-col-header">Previsto</div>
-                    <div class="kpi-col-header">Empenhado</div>
-                    <div class="kpi-col-header">Liquidado</div>
+                    <div class="kpi-col-header"
+                        data-tooltip="O Previsto é a estimativa do orçamento necessário para as despesas programadas para o IRR.">
+                        Previsto</div>
+                    <div class="kpi-col-header"
+                        data-tooltip="O Empenho é a etapa em que o governo reserva o dinheiro que será pago.">Empenhado
+                    </div>
+                    <div class="kpi-col-header"
+                        data-tooltip="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">
+                        Liquidado
+                    </div>
 
-                    <div class="kpi-row-label">Apoio à Área Finalística</div>
-                    <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-apoio-prev">–</div></div>
-                    <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-apoio-emp">–</div></div>
-                    <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-apoio-liq">–</div></div>
+                    <div class="kpi-row-label" data-tooltip="Atividades de suporte administrativo e operacional.">Apoio
+                        à
+                        Área Finalística</div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-apoio-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-apoio-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-apoio-liq">–</div>
+                    </div>
 
-                    <div class="kpi-row-label">Área Finalística</div>
-                    <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-fin-prev">–</div></div>
-                    <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-fin-emp">–</div></div>
-                    <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-fin-liq">–</div></div>
+                    <div class="kpi-row-label"
+                        data-tooltip="Ações diretamente relacionadas à missão institucional da Fiocruz.">Área
+                        Finalística
+                    </div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-fin-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-fin-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-fin-liq">–</div>
+                    </div>
 
-                    <div class="kpi-row-label">Área Institucional</div>
-                    <div class="kpi-card liberado"><div class="kpi-label">Previsto</div><div id="det-inst-prev">–</div></div>
-                    <div class="kpi-card empenhado"><div class="kpi-label">Empenhado</div><div id="det-inst-emp">–</div></div>
-                    <div class="kpi-card liquidado"><div class="kpi-label">Liquidado</div><div id="det-inst-liq">–</div></div>
+                    <div class="kpi-row-label" data-tooltip="Iniciativas estratégicas e transversais.">Área
+                        Institucional
+                    </div>
+                    <div class="kpi-card liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-inst-prev">–</div>
+                    </div>
+                    <div class="kpi-card empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-inst-emp">–</div>
+                    </div>
+                    <div class="kpi-card liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-inst-liq">–</div>
+                    </div>
 
                     <div class="kpi-row-label total">Total</div>
-                    <div class="kpi-card total-row liberado"><div class="kpi-label">Previsto</div><div id="det-tot-prev">–</div></div>
-                    <div class="kpi-card total-row empenhado"><div class="kpi-label">Empenhado</div><div id="det-tot-emp">–</div></div>
-                    <div class="kpi-card total-row liquidado"><div class="kpi-label">Liquidado</div><div id="det-tot-liq">–</div></div>
+                    <div class="kpi-card total-row liberado">
+                        <div class="kpi-label">Previsto</div>
+                        <div id="det-tot-prev">–</div>
+                    </div>
+                    <div class="kpi-card total-row empenhado">
+                        <div class="kpi-label">Empenhado</div>
+                        <div id="det-tot-emp">–</div>
+                    </div>
+                    <div class="kpi-card total-row liquidado">
+                        <div class="kpi-label">Liquidado</div>
+                        <div id="det-tot-liq">–</div>
+                    </div>
                 </div>
 
                 <div class="chart-card" style="margin-bottom:24px">
@@ -572,14 +1021,14 @@
                 <div class="tree-wrap">
                     <div class="tree-header">
                         <span>Grupos / Sub-grupo / Despesa</span>
-                        <span class="tree-values"><span>Previsto</span><span>Empenhado</span><span>Liquidado</span></span>
+                        <span
+                            class="tree-values"><span>Previsto</span><span>Empenhado</span><span>Liquidado</span></span>
                     </div>
                     <div id="arvore-detalhamento"></div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 3: APORTE INDIRETO -->
         <div id="aporte" class="panel">
             <div class="panel-title">Aporte Indireto à Pesquisa</div>
 
@@ -600,23 +1049,66 @@
                 <h4>Aporte Indireto por Grupo de Pesquisa - 2026</h4>
                 <canvas id="chart-aporte-2026" style="max-height: 340px;"></canvas>
             </div>
-        </div>
 
-        <!-- ABA 4: ORÇAMENTO APROVADO -->
-        <div id="orcamento-aprovado" class="panel">
-            <div style="margin-bottom: 20px;">
-                <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Executado & Aprovado</h2>
-                <p style="color: var(--muted); font-size: 14px;">Visão consolidada e detalhada dos recursos executados por Elemento de Despesa e acompanhamento de aprovação.</p>
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+                    <h4>Aporte Indireto por Grupo de Pesquisa - Ano X Despesa</h4>
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <div>
+                            <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Categoria:</label>
+                            <select id="g4-categoria" class="search-input"
+                                style="width: auto; padding: 4px 8px;"></select>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: var(--muted); margin-right: 6px;">Ano:</label>
+                            <select id="g4-ano" class="search-input" style="width: auto; padding: 4px 8px;"></select>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="chart-aporte-ano-desp" style="max-height: 340px;"></canvas>
             </div>
 
-            <!-- LINHA 1 DE GRÁFICOS -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px;">
+                    <h4>Aporte Indireto - Grupo de Pesquisa X Ano X Despesa</h4>
+                    <div style="display: flex; gap: 24px;">
+                        <div>
+                            <label
+                                style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Grupos</label>
+                            <select id="g5-grupo" class="search-input" style="width: 150px; padding: 4px 8px;"></select>
+                        </div>
+                        <div>
+                            <label
+                                style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">Ano</label>
+                            <div id="g5-anos-wrap"
+                                style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="chart-aporte-grupo-ano-desp" style="max-height: 340px;"></canvas>
+            </div>
+        </div>
+
+        <div id="orcamento-aprovado" class="panel">
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: var(--accent); margin-bottom: 5px;">Orçamento Executado</h2>
+                <p style="color: var(--muted); font-size: 14px;">Visão consolidada e detalhada dos recursos executados
+                    por
+                    Elemento de despesa.</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
                 <div class="chart-card">
                     <h4>Orçamento Executado por Elemento de Despesa (ED)</h4>
                     <canvas id="chart-orcamento-ed" style="max-height: 250px;"></canvas>
                 </div>
                 <div class="chart-card">
                     <h4>% Execução Orçamentária por Setor (Empenhado / Previsão Atualizada)</h4>
+                    <!-- Wrapper com rolagem para o gráfico de barras -->
                     <div class="chart-scroll-wrapper">
                         <div id="chart-execucao-setor-inner" style="position: relative; width: 100%;">
                             <canvas id="chart-execucao-setor"></canvas>
@@ -625,22 +1117,18 @@
                 </div>
             </div>
 
-            <!-- LINHA 2 DE GRÁFICOS (NOVO GRÁFICO DA ABA ORÇAR-APROV) -->
-            <div class="chart-card" style="margin-bottom: 30px;">
-                <h4>Comparativo Orçamentário: Autorizado vs. Executado por Setor Responsável</h4>
-                <canvas id="chart-orcar-aprov" style="max-height: 320px;"></canvas>
-            </div>
-
             <div class="tree-wrap">
                 <div class="tree-header" style="padding-right: 20px;">
-                    <span>Setor Responsável / Despesa</span>
+                    <span>Setor Responsável / Despesa / Elemento de despesa (ED)</span>
                     <span class="tree-values" style="width: auto; gap: 0;">
                         <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
                         <span style="width: 160px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
                         <span style="width: 130px; text-align: right; white-space: nowrap;">Previsão Atualizada</span>
                         <span style="width: 130px; text-align: right; white-space: nowrap;">Empenhado</span>
-                        <span style="width: 130px; text-align: right; white-space: nowrap; color: var(--gold);">Liquidado</span>
-                        <span style="width: 130px; text-align: right; white-space: nowrap; color: var(--green);">Pago</span>
+                        <span
+                            style="width: 130px; text-align: right; white-space: nowrap; color: var(--gold);">Liquidado</span>
+                        <span
+                            style="width: 130px; text-align: right; white-space: nowrap; color: var(--green);">Pago</span>
                     </span>
                 </div>
                 <div id="arvore-orcamento-aprovado"></div>
@@ -652,14 +1140,14 @@
             const GIDS = {
                 painel: '61010976',
                 prop: '0',
-                renomear: '1008333824',
-                orcarAprov: '2137044025' // ID da aba nova 'orçar-aprov'
+                renomear: '1008333824'
             };
 
             function csvUrl(gid) {
                 return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&cb=${Date.now()}`;
             }
 
+            /* ===== CSV PARSER ===== */
             function parseCSV(text) {
                 const lines = text.split(/\r?\n/);
                 return lines.map(line => {
@@ -669,7 +1157,8 @@
                     let inQ = false, cur = '';
                     for (let i = 0; i < line.length; i++) {
                         const c = line[i];
-                        if (c === '"') { inQ = !inQ; } else if (c === sep && !inQ) { cols.push(cur.trim()); cur = ''; } else { cur += c; }
+                        if (c === '"') { inQ = !inQ; } else if (c === sep && !inQ) { cols.push(cur.trim());
+                            cur = ''; } else { cur += c; }
                     }
                     cols.push(cur.trim());
                     return cols;
@@ -708,7 +1197,7 @@
                 return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
 
-            /* ===== CONTROLE DAS TABS ===== */
+            /* ===== TABS ===== */
             document.querySelectorAll('.tab').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -726,18 +1215,17 @@
                 });
             });
 
-            /* ===== ESTADO GLOBAL DOS GRÁFICOS ===== */
+            /* ===== ESTADO GLOBAL ===== */
             let chartCusteio = null, chartCapital = null, chartGrupos = null;
-            let chartOrcamentoED = null, chartExecucaoSetor = null, chartOrcarAprov = null;
+            let chartOrcamentoED = null, chartExecucaoSetor = null;
 
-            /* ===== INICIALIZAÇÃO ===== */
+            /* ===== INIT ===== */
             window.addEventListener('DOMContentLoaded', async () => {
                 try {
-                    const [csvPainel, csvProp, csvRenomear, csvOrcarAprov] = await Promise.all([
+                    const [csvPainel, csvProp, csvRenomear] = await Promise.all([
                         fetchCSV(GIDS.painel),
                         fetchCSV(GIDS.prop),
-                        fetchCSV(GIDS.renomear),
-                        fetchCSV(GIDS.orcarAprov)
+                        fetchCSV(GIDS.renomear)
                     ]);
 
                     renderKPIs(csvPainel);
@@ -745,8 +1233,8 @@
                     renderDetalhamento(csvProp);
                     renderAporteIndireto(csvPainel);
 
+                    // Chamada ativada para carregar a aba nova e os gráficos
                     renderOrcamentoAprovado(csvRenomear);
-                    renderGraficoOrcarAprov(csvOrcarAprov); // Renderização do novo gráfico
 
                     const agora = new Date();
                     window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
@@ -761,85 +1249,7 @@
                 }
             });
 
-            /* ===== NOVO GRÁFICO: ORÇAR-APROV ===== */
-            function renderGraficoOrcarAprov(rows) {
-                const setores = {};
-
-                rows.forEach((cols, i) => {
-                    if (i === 0 || !cols || cols.length < 5) return;
-
-                    const setor = (cols[1] || 'Outros').trim().toUpperCase();
-                    const autorizado = limparNum(cols[3]);
-                    const executado = limparNum(cols[4]);
-
-                    if (!setores[setor]) {
-                        setores[setor] = { autorizado: 0, executado: 0 };
-                    }
-                    setores[setor].autorizado += autorizado;
-                    setores[setor].executado += executado;
-                });
-
-                // Ordenação pelo maior orçamento autorizado
-                const sorted = Object.entries(setores).sort((a, b) => b[1].autorizado - a[1].autorizado);
-                const labels = sorted.map(item => item[0]);
-                const dataAutorizado = sorted.map(item => item[1].autorizado);
-                const dataExecutado = sorted.map(item => item[1].executado);
-
-                const gridStyle = { color: 'rgba(255,255,255,.06)' };
-                const tickColor = '#6a82a4';
-
-                const ctx = document.getElementById('chart-orcar-aprov').getContext('2d');
-                if (chartOrcarAprov) chartOrcarAprov.destroy();
-
-                chartOrcarAprov = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Autorizado',
-                                data: dataAutorizado,
-                                backgroundColor: '#00c2e0',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Executado',
-                                data: dataExecutado,
-                                backgroundColor: '#f0a500',
-                                borderRadius: 4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: { color: '#e8edf5', font: { size: 12 } }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(ctx) {
-                                        return ctx.dataset.label + ': ' + fmt(ctx.raw);
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { grid: gridStyle, ticks: { color: tickColor } },
-                            y: {
-                                grid: gridStyle,
-                                ticks: {
-                                    color: tickColor,
-                                    callback: v => 'R$ ' + (v / 1e6).toFixed(1) + 'M'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            /* ===== RENDERIZADOR DA ABA ORÇAMENTO APROVADO ===== */
+            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
             function renderOrcamentoAprovado(rows) {
                 const wrap = document.getElementById('arvore-orcamento-aprovado');
                 wrap.innerHTML = '';
@@ -934,7 +1344,7 @@
                     wrap.appendChild(setorDetails);
                 });
 
-                // GRÁFICO 1: ED
+                // ===== GRÁFICO 1: Orçamento Aprovado por ED (ordenado do maior para o menor) =====
                 const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
                 const labelsED = sortedED.map(item => item[0]);
                 const valoresED = sortedED.map(item => item[1]);
@@ -967,18 +1377,21 @@
                     }
                 });
 
-                // GRÁFICO 2: % EXECUÇÃO
+                // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
+                // Coleta os dados e ordena do maior para o menor
                 const dadosSetores = Object.keys(setores).map(setor => {
                     const s = setores[setor];
                     const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
                     return { setor, valor };
                 });
 
+                // Ordena do maior para o menor
                 dadosSetores.sort((a, b) => b.valor - a.valor);
 
                 const labelsSetores = dadosSetores.map(item => item.setor);
                 const valoresSetores = dadosSetores.map(item => item.valor);
 
+                // Paleta de cores do exemplo (azul ao vermelho)
                 const paletaCores = [
                     '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
                     '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
@@ -991,9 +1404,15 @@
                 const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
                 if (chartExecucaoSetor) chartExecucaoSetor.destroy();
 
+                // Aumenta a altura do gráfico dinamicamente baseado na quantidade de itens
+                // (alturaBase maior = mais espaço entre os rótulos/barras).
+                // IMPORTANTE: a altura precisa ser definida no DIV INTERNO (pai imediato do
+                // canvas), não no wrapper com rolagem — senão o Chart.js (responsive:true)
+                // usa a altura "visível" (400px) do wrapper para calcular o tamanho das
+                // barras, e elas voltam a ficar espremidas mesmo o card crescendo por fora.
                 const canvasExec = document.getElementById('chart-execucao-setor');
                 const innerExec = document.getElementById('chart-execucao-setor-inner');
-                const alturaBase = 42;
+                const alturaBase = 42; // altura por barra (antes: 30)
                 const alturaMinima = 250;
                 const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
                 innerExec.style.height = alturaCalculada + 'px';
@@ -1028,25 +1447,44 @@
                             }
                         },
                         scales: {
-                            x: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 },
-                            y: { grid: gridStyle, ticks: { color: '#ffffff', autoSkip: false, font: { size: 11 } } }
+                            x: { 
+                                grid: gridStyle, 
+                                ticks: { color: tickColor, callback: v => v + '%' }, 
+                                max: 100 
+                            },
+                            y: { 
+                                grid: gridStyle, 
+                                ticks: { 
+                                    color: '#ffffff', 
+                                    autoSkip: false,
+                                    font: { size: 11 }
+                                } 
+                            }
                         }
                     }
                 });
             }
 
-            /* ===== RENDERIZADORES DAS DEMAIS ABAS ===== */
+            /* ===== PANEL 1 — KPIs ===== */
             function renderKPIs(rows) {
-                const map = { 'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0, 'cap-lib': 0, 'cap-emp': 0, 'cap-liq': 0 };
+                const map = {
+                    'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
+                    'cap-lib': 0, 'cap-emp': 0, 'cap-liq': 0
+                };
+
                 rows.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 3) return;
+
                     const tipo = (cols[0] || '').trim();
                     const metrica = (cols[1] || '').toUpperCase();
                     const valor = limparNum(cols[2]);
+
                     if (!tipo) return;
+
                     const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
                     const isEmp = metrica.includes('EMPENH');
                     const isLiq = metrica.includes('LIQUID');
+
                     if (tipo === 'Custeio') {
                         if (isDot) map['cust-lib'] = valor;
                         if (isEmp) map['cust-emp'] = valor;
@@ -1057,30 +1495,39 @@
                         if (isLiq) map['cap-liq'] = valor;
                     }
                 });
+
                 map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
                 map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
                 map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
+
                 Object.entries(map).forEach(([id, val]) => {
                     const el = document.getElementById(id);
                     if (el) el.textContent = fmt(val);
                 });
             }
 
+            /* ===== PANEL 1 — GRÁFICOS ===== */
             function renderGraficos(rows) {
                 const anos = {};
+
                 rows.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 6) return;
+
                     const tipo = (cols[3] || '').trim();
                     const ano = (cols[4] || '').trim().replace(/\.0$/, '');
                     const valor = limparNum(cols[5]);
+
                     if (!ano || !tipo) return;
+
                     if (!anos[ano]) anos[ano] = { Custeio: 0, Capital: 0 };
                     if (tipo === 'Custeio') anos[ano].Custeio += valor;
                     else if (tipo === 'Capital') anos[ano].Capital += valor;
                 });
+
                 const labels = Object.keys(anos).sort();
                 const custeio = labels.map(a => anos[a].Custeio);
                 const capital = labels.map(a => anos[a].Capital);
+
                 const grid = { color: 'rgba(255,255,255,.06)' };
                 const tickColor = '#6a82a4';
 
@@ -1088,26 +1535,52 @@
                 if (chartCusteio) chartCusteio.destroy();
                 chartCusteio = new Chart(ctx1, {
                     type: 'bar',
-                    data: { labels, datasets: [{ label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid, ticks: { color: tickColor } }, y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e6).toFixed(1) + 'M' } } } }
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Custeio', data: custeio, backgroundColor: '#0077b6', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor } },
+                            y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e6).toFixed(1) + 'M' } }
+                        }
+                    }
                 });
 
                 const ctx2 = document.getElementById('chart-capital').getContext('2d');
                 if (chartCapital) chartCapital.destroy();
                 chartCapital = new Chart(ctx2, {
                     type: 'bar',
-                    data: { labels, datasets: [{ label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid, ticks: { color: tickColor } }, y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e3).toFixed(0) + 'k' } } } }
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Capital', data: capital, backgroundColor: '#00c2e0', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor } },
+                            y: { grid, ticks: { color: tickColor, callback: v => 'R$' + (v / 1e3).toFixed(0) + 'k' } }
+                        }
+                    }
                 });
             }
 
+            /* ===== PANEL 2 — DETALHAMENTO ===== */
             const AREA_ORDER = ['Área-meio', 'Área Finalística', 'Área Institucional'];
-            const AREA_LABELS = { 'Área-meio': 'Apoio à Área Finalística', 'Área Finalística': 'Área Finalística', 'Área Institucional': 'Área Institucional' };
+            const AREA_LABELS = {
+                'Área-meio': 'Apoio à Área Finalística',
+                'Área Finalística': 'Área Finalística',
+                'Área Institucional': 'Área Institucional'
+            };
             const AREA_IDS = { 'Área-meio': 'apoio', 'Área Finalística': 'fin', 'Área Institucional': 'inst' };
 
             function renderDetalhamento(rows) {
                 document.getElementById('loader-det').style.display = 'none';
                 document.getElementById('det-content').style.display = 'block';
+
                 const dados = parseDetalhamento(rows);
                 renderKPIsDetalhamento(dados);
                 renderChartGrupos(dados);
@@ -1134,12 +1607,14 @@
             function renderKPIsDetalhamento(dados) {
                 const sums = {};
                 AREA_ORDER.forEach(a => sums[a] = { previsto: 0, empenhado: 0, liquidado: 0 });
+
                 dados.forEach(r => {
                     if (!sums[r.area]) return;
                     sums[r.area].previsto += r.previsto;
                     sums[r.area].empenhado += r.empenhado;
                     sums[r.area].liquidado += r.liquidado;
                 });
+
                 const total = { previsto: 0, empenhado: 0, liquidado: 0 };
                 AREA_ORDER.forEach(a => {
                     const id = AREA_IDS[a];
@@ -1150,6 +1625,7 @@
                     total.empenhado += sums[a].empenhado;
                     total.liquidado += sums[a].liquidado;
                 });
+
                 document.getElementById('det-tot-prev').textContent = fmt(total.previsto);
                 document.getElementById('det-tot-emp').textContent = fmt(total.empenhado);
                 document.getElementById('det-tot-liq').textContent = fmt(total.liquidado);
@@ -1164,10 +1640,12 @@
                     agg[r.grupo].empenhado += r.empenhado;
                     agg[r.grupo].liquidado += r.liquidado;
                 });
+
                 const labels = Object.keys(agg);
                 const previstos = labels.map(g => agg[g].previsto);
                 const empenhados = labels.map(g => agg[g].empenhado);
                 const liquidados = labels.map(g => agg[g].liquidado);
+
                 const grid = { color: 'rgba(255,255,255,.06)' };
                 const tickColor = '#6a82a4';
 
@@ -1183,21 +1661,32 @@
                             { label: 'Despesas Liquidadas', data: liquidados, backgroundColor: '#f2994a', borderRadius: 4 }
                         ]
                     },
-                    options: { responsive: true, plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } }, scales: { x: { grid, ticks: { color: tickColor, autoSkip: false } }, y: { grid, ticks: { color: tickColor, callback: v => fmt(v) } } } }
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: '#e8edf5', font: { size: 12 } } } },
+                        scales: {
+                            x: { grid, ticks: { color: tickColor, autoSkip: false } },
+                            y: { grid, ticks: { color: tickColor, callback: v => fmt(v) } }
+                        }
+                    }
                 });
             }
 
             function buildArvore(dados) {
                 const arvore = {};
                 AREA_ORDER.forEach(a => arvore[a] = {});
+
                 dados.forEach(r => {
                     if (!arvore[r.area]) return;
                     const grupo = r.grupo || '(sem grupo)';
                     const sub = r.subgrupo || '(sem sub-grupo)';
                     const desp = r.despesa || '(sem despesa)';
+
                     if (!arvore[r.area][grupo]) arvore[r.area][grupo] = {};
                     if (!arvore[r.area][grupo][sub]) arvore[r.area][grupo][sub] = {};
-                    if (!arvore[r.area][grupo][sub][desp]) arvore[r.area][grupo][sub][desp] = { previsto: 0, empenhado: 0, liquidado: 0 };
+                    if (!arvore[r.area][grupo][sub][desp]) arvore[r.area][grupo][sub][desp] = { previsto: 0, empenhado: 0,
+                        liquidado: 0 };
+
                     arvore[r.area][grupo][sub][desp].previsto += r.previsto;
                     arvore[r.area][grupo][sub][desp].empenhado += r.empenhado;
                     arvore[r.area][grupo][sub][desp].liquidado += r.liquidado;
@@ -1218,19 +1707,26 @@
             function renderArvore(arvore) {
                 const wrap = document.getElementById('arvore-detalhamento');
                 wrap.innerHTML = '';
+
                 AREA_ORDER.forEach(areaKey => {
                     const grupos = arvore[areaKey] || {};
                     const gruposKeys = Object.keys(grupos).sort();
                     if (gruposKeys.length === 0) return;
-                    const totaisGrupo = gruposKeys.map(g => somaTotais(Object.values(grupos[g]).flatMap(sub => Object.values(sub))));
+
+                    const totaisGrupo = gruposKeys.map(g => somaTotais(
+                        Object.values(grupos[g]).flatMap(sub => Object.values(sub))
+                    ));
                     const totalArea = somaTotais(totaisGrupo);
+
                     const areaDetails = document.createElement('details');
                     areaDetails.className = 'tree-area';
                     areaDetails.open = true;
 
                     const areaSummary = document.createElement('summary');
                     areaSummary.className = 'tree-summary tree-area-summary';
-                    areaSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` + valoresHTML(totalArea);
+                    areaSummary.innerHTML =
+                        `<span class="tree-label"><span class="tree-toggle"></span>${AREA_LABELS[areaKey] || areaKey}</span>` +
+                        valoresHTML(totalArea);
                     areaDetails.appendChild(areaSummary);
 
                     const gruposWrap = document.createElement('div');
@@ -1240,12 +1736,15 @@
                         const subgrupos = grupos[grupoKey];
                         const subKeys = Object.keys(subgrupos).sort();
                         const totalGrupo = somaTotais(subKeys.flatMap(s => Object.values(subgrupos[s])));
+
                         const grupoDetails = document.createElement('details');
                         grupoDetails.className = 'tree-grupo';
 
                         const grupoSummary = document.createElement('summary');
                         grupoSummary.className = 'tree-summary tree-grupo-summary';
-                        grupoSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${grupoKey}</span>` + valoresHTML(totalGrupo);
+                        grupoSummary.innerHTML =
+                            `<span class="tree-label"><span class="tree-toggle"></span>${grupoKey}</span>` +
+                            valoresHTML(totalGrupo);
                         grupoDetails.appendChild(grupoSummary);
 
                         const subsWrap = document.createElement('div');
@@ -1255,12 +1754,15 @@
                             const despesas = subgrupos[subKey];
                             const despKeys = Object.keys(despesas).sort();
                             const totalSub = somaTotais(Object.values(despesas));
+
                             const subDetails = document.createElement('details');
                             subDetails.className = 'tree-subgrupo';
 
                             const subSummary = document.createElement('summary');
                             subSummary.className = 'tree-summary tree-subgrupo-summary';
-                            subSummary.innerHTML = `<span class="tree-label"><span class="tree-toggle"></span>${subKey}</span>` + valoresHTML(totalSub);
+                            subSummary.innerHTML =
+                                `<span class="tree-label"><span class="tree-toggle"></span>${subKey}</span>` +
+                                valoresHTML(totalSub);
                             subDetails.appendChild(subSummary);
 
                             const despWrap = document.createElement('div');
@@ -1270,7 +1772,8 @@
                                 const v = despesas[despKey];
                                 const leaf = document.createElement('div');
                                 leaf.className = 'tree-leaf';
-                                leaf.innerHTML = `<span class="tree-label">${despKey}</span>` + valoresHTML(v);
+                                leaf.innerHTML = `<span class="tree-label">${despKey}</span>` +
+                                valoresHTML(v);
                                 despWrap.appendChild(leaf);
                             });
 
@@ -1287,9 +1790,9 @@
                 });
             }
 
-            /* ===== APORTE INDIRETO ===== */
+            /* ===== PANEL 3 — APORTE INDIRETO ===== */
             let dadosAporte = [];
-            let chartAporteHist = null, chartAporteGrupo = null, chartAporte2026 = null;
+            let chartAporteHist = null, chartAporteGrupo = null, chartAporte2026 = null, chartG4 = null, chartG5 = null;
 
             const CAT_COLORS = {
                 'Almoxarifado': '#4e79a7',
@@ -1304,10 +1807,12 @@
                 dadosAporte = [];
                 rows.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length <= 24) return;
+
                     const ano = (cols[20] || '').trim().replace(/\.0$/, '');
                     const und = (cols[21] || '').trim();
                     const categoria = (cols[23] || '').trim();
                     const total = limparNum(cols[24]);
+
                     if (ano && und && categoria && total > 0) {
                         dadosAporte.push({ ano, und, categoria, total });
                     }
@@ -1316,6 +1821,8 @@
                 renderChartAporteHist();
                 setupFilterChartAporteGrupo();
                 renderChartAporte2026();
+                setupChart4();
+                setupChart5();
             }
 
             function agruparParaStacked(dados, xField, catField, sortXAscByTotal = false) {
@@ -1330,7 +1837,8 @@
 
                 const datasets = categorias.map(cat => {
                     const data = xLabels.map(xVal => {
-                        return dados.filter(d => d[xField] === xVal && d[catField] === cat).reduce((sum, d) => sum + d.total, 0);
+                        return dados.filter(d => d[xField] === xVal && d[catField] === cat).reduce((sum, d) => sum +
+                            d.total, 0);
                     });
                     return { label: cat, data: data, backgroundColor: CAT_COLORS[cat] || '#a0cbe8', borderWidth: 0 };
                 });
@@ -1356,7 +1864,8 @@
                 const btnWrap = document.getElementById('filter-ano-grupo');
                 btnWrap.innerHTML = '<button class="year-btn active" onclick="selecionarAnoG2(this, null)">(Tudo)</button>';
                 anos.forEach(ano => {
-                    btnWrap.innerHTML += `<button class="year-btn" onclick="selecionarAnoG2(this, '${ano}')">${ano}</button>`;
+                    btnWrap.innerHTML +=
+                        `<button class="year-btn" onclick="selecionarAnoG2(this, '${ano}')">${ano}</button>`;
                 });
                 renderChartAporteGrupo(null);
             }
@@ -1376,7 +1885,8 @@
                     data: agruparParaStacked(filtrados, 'und', 'categoria'),
                     options: {
                         responsive: true,
-                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } },
+                            y: { stacked: true, ticks: { callback: v => fmt(v) } } },
                         plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
                     }
                 });
@@ -1391,9 +1901,93 @@
                     data: agruparParaStacked(filtrados, 'und', 'categoria', true),
                     options: {
                         responsive: true,
-                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } }, y: { stacked: true, ticks: { callback: v => fmt(v) } } },
+                        scales: { x: { stacked: true, ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 } },
+                            y: { stacked: true, ticks: { callback: v => fmt(v) } } },
                         plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } } }
                     }
+                });
+            }
+
+            function setupChart4() {
+                const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+                const categorias = [...new Set(dadosAporte.map(d => d.categoria))].sort();
+                const selAno = document.getElementById('g4-ano');
+                const selCat = document.getElementById('g4-categoria');
+                anos.forEach(a => selAno.add(new Option(a, a)));
+                categorias.forEach(c => selCat.add(new Option(c, c)));
+                if (anos.length > 0) selAno.value = anos[anos.length - 1];
+                selAno.addEventListener('change', renderChart4);
+                selCat.addEventListener('change', renderChart4);
+                renderChart4();
+            }
+
+            function renderChart4() {
+                const ano = document.getElementById('g4-ano').value;
+                const cat = document.getElementById('g4-categoria').value;
+                const filtrados = dadosAporte.filter(d => d.ano === ano && d.categoria === cat);
+                const agg = {};
+                filtrados.forEach(d => { agg[d.und] = (agg[d.und] || 0) + d.total; });
+                const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+
+                const ctx = document.getElementById('chart-aporte-ano-desp').getContext('2d');
+                if (chartG4) chartG4.destroy();
+                chartG4 = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: sorted.map(i => i[0]), datasets: [{ label: cat, data: sorted.map(i => i[1]),
+                            backgroundColor: '#4e79a7' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false,
+                                maxRotation: 90, minRotation: 90 } }, y: { ticks: { callback: v => fmt(v) } } } }
+                });
+            }
+
+            function setupChart5() {
+                const grupos = [...new Set(dadosAporte.map(d => d.und))].sort();
+                const anos = [...new Set(dadosAporte.map(d => d.ano))].sort();
+                const selGrupo = document.getElementById('g5-grupo');
+                grupos.forEach(g => selGrupo.add(new Option(g, g)));
+                selGrupo.addEventListener('change', renderChart5);
+
+                const chkWrap = document.getElementById('g5-anos-wrap');
+                chkWrap.innerHTML = '<label><input type="checkbox" id="g5-chk-tudo" checked> (Tudo)</label>';
+                anos.forEach(a => { chkWrap.innerHTML +=
+                        `<label><input type="checkbox" class="g5-chk-ano" value="${a}"> ${a}</label>`; });
+
+                document.getElementById('g5-chk-tudo').addEventListener('change', (e) => {
+                    document.querySelectorAll('.g5-chk-ano').forEach(chk => chk.checked = false);
+                    renderChart5();
+                });
+                document.querySelectorAll('.g5-chk-ano').forEach(chk => {
+                    chk.addEventListener('change', () => { document.getElementById('g5-chk-tudo').checked = false;
+                        renderChart5(); });
+                });
+                renderChart5();
+            }
+
+            function renderChart5() {
+                const grupo = document.getElementById('g5-grupo').value;
+                const chkTudo = document.getElementById('g5-chk-tudo').checked;
+                const anosSel = Array.from(document.querySelectorAll('.g5-chk-ano:checked')).map(c => c.value);
+
+                let filtrados = dadosAporte.filter(d => d.und === grupo);
+                if (!chkTudo && anosSel.length > 0) filtrados = filtrados.filter(d => anosSel.includes(d.ano));
+
+                const agg = {};
+                let totalGeral = 0;
+                filtrados.forEach(d => { agg[d.categoria] = (agg[d.categoria] || 0) + d.total;
+                    totalGeral += d.total; });
+                const sorted = Object.entries(agg).sort((a, b) => a[1] - b[1]);
+
+                const labels = sorted.map(i => i[0]);
+                const data = sorted.map(i => i[1]);
+                labels.push('Total');
+                data.push(totalGeral);
+
+                const ctx = document.getElementById('chart-aporte-grupo-ano-desp').getContext('2d');
+                if (chartG5) chartG5.destroy();
+                chartG5 = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ data: data, backgroundColor: '#4e79a7' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt(v) } } } }
                 });
             }
         </script>
