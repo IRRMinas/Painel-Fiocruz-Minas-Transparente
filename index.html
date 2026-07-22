@@ -1117,6 +1117,12 @@
                 </div>
             </div>
 
+            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor -->
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <h4>Orçamento Aprovado por Setor — Previsto x Autorizado x Executado</h4>
+                <canvas id="chart-orcamento-aprovado" style="max-height: 400px;"></canvas>
+            </div>
+
             <div class="tree-wrap">
                 <div class="tree-header" style="padding-right: 20px;">
                     <span>Setor Responsável / Despesa</span>
@@ -1140,7 +1146,8 @@
             const GIDS = {
                 painel: '61010976',
                 prop: '0',
-                renomear: '1008333824'
+                renomear: '1008333824',
+                orcarAprov: '2137044025' // NOVO: ID da aba "orçar-aprov"
             };
 
             function csvUrl(gid) {
@@ -1193,8 +1200,16 @@
             function fmt(v) {
                 if (typeof v === 'string' && v.includes('R$')) return v;
                 const n = typeof v === 'number' ? v : limparNum(v);
-                if (n === 0) return '-';
+                if (n === 0) return 'R$ 0,00';
                 return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function fmtShort(v) {
+                const n = typeof v === 'number' ? v : limparNum(v);
+                if (n === 0) return 'R$ 0';
+                if (n >= 1e6) return 'R$ ' + (n / 1e6).toFixed(1) + 'M';
+                if (n >= 1e3) return 'R$ ' + (n / 1e3).toFixed(1) + 'k';
+                return 'R$ ' + n.toFixed(0);
             }
 
             /* ===== TABS ===== */
@@ -1217,15 +1232,16 @@
 
             /* ===== ESTADO GLOBAL ===== */
             let chartCusteio = null, chartCapital = null, chartGrupos = null;
-            let chartOrcamentoED = null, chartExecucaoSetor = null;
+            let chartOrcamentoED = null, chartExecucaoSetor = null, chartOrcamentoAprovado = null;
 
             /* ===== INIT ===== */
             window.addEventListener('DOMContentLoaded', async () => {
                 try {
-                    const [csvPainel, csvProp, csvRenomear] = await Promise.all([
+                    const [csvPainel, csvProp, csvRenomear, csvOrcarAprov] = await Promise.all([
                         fetchCSV(GIDS.painel),
                         fetchCSV(GIDS.prop),
-                        fetchCSV(GIDS.renomear)
+                        fetchCSV(GIDS.renomear),
+                        fetchCSV(GIDS.orcarAprov) // Carrega a nova aba
                     ]);
 
                     renderKPIs(csvPainel);
@@ -1233,8 +1249,8 @@
                     renderDetalhamento(csvProp);
                     renderAporteIndireto(csvPainel);
 
-                    // Chamada ativada para carregar a aba nova e os gráficos
-                    renderOrcamentoAprovado(csvRenomear);
+                    // Renderiza os gráficos existentes e o NOVO gráfico da aba "orçar-aprov"
+                    renderOrcamentoAprovado(csvRenomear, csvOrcarAprov);
 
                     const agora = new Date();
                     window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
@@ -1250,14 +1266,16 @@
             });
 
             /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
-            function renderOrcamentoAprovado(rows) {
+            // Modificado para aceitar os dados da nova aba (csvOrcarAprov)
+            function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
                 const wrap = document.getElementById('arvore-orcamento-aprovado');
                 wrap.innerHTML = '';
 
                 const setores = {};
                 const dadosED = {};
 
-                rows.forEach((cols, i) => {
+                // Processa os dados da aba "Renomear" (para a árvore e gráficos existentes)
+                rowsRenomear.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 8) return;
 
                     let setor = (cols[0] || '').trim().toUpperCase();
@@ -1295,14 +1313,14 @@
 
                 function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
                     return `
-            <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
-                <span style="width: 130px; text-align: right;">${fmt(p)}</span>
-                <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(aj)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(e)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(l)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
-            </span>`;
+                <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
+                    <span style="width: 130px; text-align: right;">${fmt(p)}</span>
+                    <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
+                    <span style="width: 130px; text-align: right;">${fmt(aj)}</span>
+                    <span style="width: 130px; text-align: right;">${fmt(e)}</span>
+                    <span style="width: 130px; text-align: right;">${fmt(l)}</span>
+                    <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
+                </span>`;
                 }
 
                 Object.keys(setores).sort().forEach(setorNome => {
@@ -1321,8 +1339,8 @@
                     setorSummary.style.color = '#ffffff';
 
                     setorSummary.innerHTML = `
-            <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
-        ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
+                <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
+            ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
                     setorDetails.appendChild(setorSummary);
 
                     const despesasWrap = document.createElement('div');
@@ -1335,8 +1353,8 @@
                         const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
 
                         leaf.innerHTML = `
-                <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
-            ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
+                    <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
+                ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
                         despesasWrap.appendChild(leaf);
                     });
 
@@ -1378,20 +1396,17 @@
                 });
 
                 // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
-                // Coleta os dados e ordena do maior para o menor
                 const dadosSetores = Object.keys(setores).map(setor => {
                     const s = setores[setor];
                     const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
                     return { setor, valor };
                 });
 
-                // Ordena do maior para o menor
                 dadosSetores.sort((a, b) => b.valor - a.valor);
 
                 const labelsSetores = dadosSetores.map(item => item.setor);
                 const valoresSetores = dadosSetores.map(item => item.valor);
 
-                // Paleta de cores do exemplo (azul ao vermelho)
                 const paletaCores = [
                     '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
                     '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
@@ -1404,15 +1419,9 @@
                 const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
                 if (chartExecucaoSetor) chartExecucaoSetor.destroy();
 
-                // Aumenta a altura do gráfico dinamicamente baseado na quantidade de itens
-                // (alturaBase maior = mais espaço entre os rótulos/barras).
-                // IMPORTANTE: a altura precisa ser definida no DIV INTERNO (pai imediato do
-                // canvas), não no wrapper com rolagem — senão o Chart.js (responsive:true)
-                // usa a altura "visível" (400px) do wrapper para calcular o tamanho das
-                // barras, e elas voltam a ficar espremidas mesmo o card crescendo por fora.
                 const canvasExec = document.getElementById('chart-execucao-setor');
                 const innerExec = document.getElementById('chart-execucao-setor-inner');
-                const alturaBase = 42; // altura por barra (antes: 30)
+                const alturaBase = 42;
                 const alturaMinima = 250;
                 const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
                 innerExec.style.height = alturaCalculada + 'px';
@@ -1459,6 +1468,112 @@
                                     autoSkip: false,
                                     font: { size: 11 }
                                 } 
+                            }
+                        }
+                    }
+                });
+
+                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor (Previsto x Autorizado x Executado) =====
+                // Processa os dados da nova aba "orçar-aprov"
+                const dadosOrcarAprov = {};
+                rowsOrcarAprov.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 5) return;
+                    const descricao = (cols[0] || '').trim();
+                    const setor = (cols[1] || '').trim().toUpperCase();
+                    const previsto = limparNum(cols[2]);
+                    const autorizado = limparNum(cols[3]);
+                    const executado = limparNum(cols[4]);
+
+                    if (!setor || (previsto === 0 && autorizado === 0 && executado === 0)) return;
+
+                    // Agrupa os dados por setor, somando os valores
+                    if (!dadosOrcarAprov[setor]) {
+                        dadosOrcarAprov[setor] = { previsto: 0, autorizado: 0, executado: 0 };
+                    }
+                    dadosOrcarAprov[setor].previsto += previsto;
+                    dadosOrcarAprov[setor].autorizado += autorizado;
+                    dadosOrcarAprov[setor].executado += executado;
+                });
+
+                // Ordena os setores pelo valor de 'previsto' (do maior para o menor)
+                const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => dadosOrcarAprov[b].previsto - dadosOrcarAprov[a].previsto);
+
+                const labelsOrcarAprov = sortedSetores;
+                const previstoData = sortedSetores.map(s => dadosOrcarAprov[s].previsto);
+                const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
+                const executadoData = sortedSetores.map(s => dadosOrcarAprov[s].executado);
+
+                const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
+                if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
+
+                chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsOrcarAprov,
+                        datasets: [
+                            {
+                                label: 'Previsto',
+                                data: previstoData,
+                                backgroundColor: '#e0605a',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7,
+                            },
+                            {
+                                label: 'Autorizado',
+                                data: autorizadoData,
+                                backgroundColor: '#4a7ebb',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7,
+                            },
+                            {
+                                label: 'Executado',
+                                data: executadoData,
+                                backgroundColor: '#22c55e',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.7,
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y', // Gráfico de barras horizontais
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: '#e8edf5',
+                                    font: { size: 12 },
+                                    boxWidth: 15,
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + fmt(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: gridStyle,
+                                ticks: { 
+                                    color: tickColor,
+                                    callback: function(value) {
+                                        return fmtShort(value);
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: gridStyle,
+                                ticks: { 
+                                    color: '#ffffff',
+                                    font: { size: 11 }
+                                }
                             }
                         }
                     }
