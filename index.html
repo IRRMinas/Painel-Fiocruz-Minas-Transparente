@@ -1113,9 +1113,7 @@
             <div class="chart-card" style="margin-bottom: 24px;">
                 <h4>Execução do Orçamento Aprovado por Setor</h4>
                 <p style="color: var(--muted); font-size: 12px; margin: -6px 0 14px 0;">
-                    Cada barra mostra quanto do valor <strong>autorizado</strong> já foi <strong>executado</strong>.
-                    A cor indica o ritmo de execução. Setores com nome em laranja sofreram corte na aprovação
-                    (Previsto → Autorizado) — o percentual do corte aparece ao lado do nome.
+
                 </p>
                 <div style="display: flex; gap: 18px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;">
                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
@@ -1510,8 +1508,12 @@
                     dadosOrcarAprov[setor].executado += executado;
                 });
 
-                // Ordena os setores pelo valor de 'previsto' (do maior para o menor)
-                const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => dadosOrcarAprov[b].previsto - dadosOrcarAprov[a].previsto);
+                // Ordena os setores pelo % de execução (Executado / Autorizado), do maior para o menor
+                const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => {
+                    const pctA = dadosOrcarAprov[a].autorizado > 0 ? dadosOrcarAprov[a].executado / dadosOrcarAprov[a].autorizado : -1;
+                    const pctB = dadosOrcarAprov[b].autorizado > 0 ? dadosOrcarAprov[b].executado / dadosOrcarAprov[b].autorizado : -1;
+                    return pctB - pctA;
+                });
 
                 const previstoData = sortedSetores.map(s => dadosOrcarAprov[s].previsto);
                 const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
