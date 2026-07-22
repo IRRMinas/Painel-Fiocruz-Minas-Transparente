@@ -1109,9 +1109,9 @@
                 </div>
             </div>
 
-            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor (COM ROLAGEM) -->
+            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor (% de execução) -->
             <div class="chart-card" style="margin-bottom: 24px;">
-                <h4>Orçamento Aprovado por Setor — Previsto x Autorizado x Executado</h4>
+                <h4>% Execução do Orçamento Aprovado por Setor (Executado / Previsto)</h4>
                 <div class="chart-scroll-wrapper">
                     <div id="chart-orcamento-aprovado-inner" style="position: relative; width: 100%;">
                         <canvas id="chart-orcamento-aprovado"></canvas>
@@ -1467,7 +1467,7 @@
                     }
                 });
 
-                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor (COM ROLAGEM) =====
+                // ===== NOVO GRÁFICO 3: % Execução do Orçamento Aprovado por Setor =====
                 const dadosOrcarAprov = {};
                 rowsOrcarAprov.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 5) return;
@@ -1487,22 +1487,34 @@
                     dadosOrcarAprov[setor].executado += executado;
                 });
 
-                // Ordena os setores pelo valor de 'previsto' (do maior para o menor)
-                const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => dadosOrcarAprov[b].previsto - dadosOrcarAprov[a].previsto);
+                // Calcula a porcentagem de execução para cada setor (Executado / Previsto * 100)
+                const sortedSetoresAprov = Object.keys(dadosOrcarAprov).sort((a, b) => {
+                    const pctA = dadosOrcarAprov[a].previsto > 0 ? (dadosOrcarAprov[a].executado / dadosOrcarAprov[a].previsto) * 100 : 0;
+                    const pctB = dadosOrcarAprov[b].previsto > 0 ? (dadosOrcarAprov[b].executado / dadosOrcarAprov[b].previsto) * 100 : 0;
+                    return pctB - pctA;
+                });
 
-                const labelsOrcarAprov = sortedSetores;
-                const previstoData = sortedSetores.map(s => dadosOrcarAprov[s].previsto);
-                const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
-                const executadoData = sortedSetores.map(s => dadosOrcarAprov[s].executado);
+                const labelsOrcarAprov = sortedSetoresAprov;
+                const pctExecutado = sortedSetoresAprov.map(s => {
+                    const prev = dadosOrcarAprov[s].previsto;
+                    return prev > 0 ? parseFloat(((dadosOrcarAprov[s].executado / prev) * 100).toFixed(2)) : 0;
+                });
+
+                // Cores para as barras (verde quando perto de 100%, vermelho quando baixo)
+                const coresAprov = pctExecutado.map(pct => {
+                    if (pct >= 95) return '#22c55e'; // Verde
+                    if (pct >= 70) return '#f0a500'; // Amarelo
+                    return '#e0605a'; // Vermelho
+                });
 
                 const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
                 if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
 
-                // Configura o container com rolagem (mesmo padrão do gráfico de % execução)
+                // Configura o container com rolagem
                 const canvasAprov = document.getElementById('chart-orcamento-aprovado');
                 const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
-                const alturaBaseAprov = 50; // um pouco mais de espaço para 3 barras por setor
-                const alturaMinimaAprov = 250;
+                const alturaBaseAprov = 40;
+                const alturaMinimaAprov = 200;
                 const alturaCalculadaAprov = Math.max(alturaMinimaAprov, labelsOrcarAprov.length * alturaBaseAprov);
                 innerAprov.style.height = alturaCalculadaAprov + 'px';
                 canvasAprov.style.width = '100%';
@@ -1511,53 +1523,32 @@
                     type: 'bar',
                     data: {
                         labels: labelsOrcarAprov,
-                        datasets: [
-                            {
-                                label: 'Previsto',
-                                data: previstoData,
-                                backgroundColor: '#e0605a',
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
-                            },
-                            {
-                                label: 'Autorizado',
-                                data: autorizadoData,
-                                backgroundColor: '#4a7ebb',
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
-                            },
-                            {
-                                label: 'Executado',
-                                data: executadoData,
-                                backgroundColor: '#22c55e',
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
-                            }
-                        ]
+                        datasets: [{
+                            label: '% Executado',
+                            data: pctExecutado,
+                            backgroundColor: coresAprov,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.7,
+                        }]
                     },
                     options: {
                         indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                labels: { 
-                                    color: '#e8edf5',
-                                    font: { size: 12 },
-                                    boxWidth: 15,
-                                    padding: 15
-                                }
-                            },
+                            legend: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return context.dataset.label + ': ' + fmt(context.raw);
+                                        const setor = context.label;
+                                        const dados = dadosOrcarAprov[setor];
+                                        return [
+                                            'Executado: ' + fmt(dados.executado),
+                                            'Previsto: ' + fmt(dados.previsto),
+                                            'Percentual: ' + context.raw + '%'
+                                        ];
                                     }
                                 }
                             }
@@ -1568,8 +1559,9 @@
                                 ticks: { 
                                     color: tickColor,
                                     callback: function(value) {
-                                        return fmtShort(value);
-                                    }
+                                        return value + '%';
+                                    },
+                                    max: 100
                                 }
                             },
                             y: {
