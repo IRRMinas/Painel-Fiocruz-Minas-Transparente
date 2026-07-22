@@ -1119,7 +1119,7 @@
 
             <div class="tree-wrap">
                 <div class="tree-header" style="padding-right: 20px;">
-                    <span>Setor Responsável / Despesa / Elemento de despesa (ED)</span>
+                    <span>Setor Responsável / Despesa</span>
                     <span class="tree-values" style="width: auto; gap: 0;">
                         <span style="width: 130px; text-align: right; white-space: nowrap;">Previsto Inicial</span>
                         <span style="width: 160px; text-align: right; white-space: nowrap;">Aprovado Diretoria</span>
@@ -1140,10 +1140,7 @@
             const GIDS = {
                 painel: '61010976',
                 prop: '0',
-                renomear: '1008333824',
-                orcarAprov: '2137044025'
-
-                
+                renomear: '1008333824'
             };
 
             function csvUrl(gid) {
@@ -1225,11 +1222,10 @@
             /* ===== INIT ===== */
             window.addEventListener('DOMContentLoaded', async () => {
                 try {
-                    const [csvPainel, csvProp, csvRenomear, csvOrcarAprov] = await Promise.all([
+                    const [csvPainel, csvProp, csvRenomear] = await Promise.all([
                         fetchCSV(GIDS.painel),
                         fetchCSV(GIDS.prop),
                         fetchCSV(GIDS.renomear)
-                        fetchCSV(GIDS.orcarAprov)
                     ]);
 
                     renderKPIs(csvPainel);
