@@ -1140,7 +1140,10 @@
             const GIDS = {
                 painel: '61010976',
                 prop: '0',
-                renomear: '1008333824'
+                renomear: '1008333824',
+                orcarAprov: '2137044025'
+
+                
             };
 
             function csvUrl(gid) {
@@ -1222,10 +1225,11 @@
             /* ===== INIT ===== */
             window.addEventListener('DOMContentLoaded', async () => {
                 try {
-                    const [csvPainel, csvProp, csvRenomear] = await Promise.all([
+                    const [csvPainel, csvProp, csvRenomear, csvOrcarAprov] = await Promise.all([
                         fetchCSV(GIDS.painel),
                         fetchCSV(GIDS.prop),
-                        fetchCSV(GIDS.renomear)
+                        fetchCSV(GIDS.renomear),
+                        fetchCSV(GIDS.orcarAprov)
                     ]);
 
                     renderKPIs(csvPainel);
@@ -1234,7 +1238,7 @@
                     renderAporteIndireto(csvPainel);
 
                     // Chamada ativada para carregar a aba nova e os gráficos
-                    renderOrcamentoAprovado(csvRenomear);
+                    renderOrcamentoAprovado(csvOrcarAprov, csvRenomear);
 
                     const agora = new Date();
                     window.textoSyncGeral = `Sincronizado: ${agora.toLocaleDateString('pt-BR')} às 08:00:00`;
@@ -1249,252 +1253,358 @@
                 }
             });
 
-            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
-            function renderOrcamentoAprovado(rows) {
-                const wrap = document.getElementById('arvore-orcamento-aprovado');
-                wrap.innerHTML = '';
+/* ===== ABA: ORÇAMENTO APROVADO ===== */
+function renderOrcamentoAprovado(rowsOrcarAprov, rowsRenomear) {
+    // 1. Processa a nova aba (orçar-aprov - GID 2137044025)
+    const setoresAprov = {};
+    let totalGeralAprov = 0;
 
-                const setores = {};
-                const dadosED = {};
+    rowsOrcarAprov.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 4) return;
 
-                rows.forEach((cols, i) => {
-                    if (i === 0 || !cols || cols.length < 8) return;
+        const setor = (cols[1] || 'OUTROS').trim().toUpperCase();
+        const previsto = limparNum(cols[2]);
+        const autorizado = limparNum(cols[3]);
+        const executado = limparNum(cols[4]);
 
-                    let setor = (cols[0] || '').trim().toUpperCase();
-                    if (!setor) return;
+        if (!setor || autorizado === 0) return;
 
-                    const despesa = (cols[1] || '').trim();
-                    const prevInit = limparNum(cols[2]);
-                    const aprovDiret = limparNum(cols[3]);
-                    const despAjust = limparNum(cols[4]);
-                    const empenhado = limparNum(cols[5]);
-                    const liquidado = limparNum(cols[6]);
-                    const pago = limparNum(cols[7]);
-                    const ed = (cols[8] || '').trim();
+        if (!setoresAprov[setor]) {
+            setoresAprov[setor] = { previsto: 0, autorizado: 0, executado: 0 };
+        }
 
-                    if (!setores[setor]) {
-                        setores[setor] = {
-                            totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
-                        };
-                    }
+        setoresAprov[setor].previsto += previsto;
+        setoresAprov[setor].autorizado += autorizado;
+        setoresAprov[setor].executado += executado;
+        totalGeralAprov += autorizado;
+    });
 
-                    setores[setor].totPrev += prevInit;
-                    setores[setor].totAprov += aprovDiret;
-                    setores[setor].totAjust += despAjust;
-                    setores[setor].totEmp += empenhado;
-                    setores[setor].totLiq += liquidado;
-                    setores[setor].totPag += pago;
+    const sortedSetores = Object.entries(setoresAprov).sort((a, b) => b[1].autorizado - a[1].autorizado);
+    const labelsSetores = sortedSetores.map(item => item[0]);
+    const valoresAutorizados = sortedSetores.map(item => item[1].autorizado);
 
-                    setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+    const paletaCores = [
+                '#00c2e0', '#0077b6', '#f0a500', '#22c55e', '#a855f7',
+                '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#6366f1'
+            ];
 
-                    if (ed) {
-                        const labelED = "ED " + ed;
-                        dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
-                    }
-                });
+            // Atualiza a área superior de gráficos na aba
+            const panel = document.getElementById('orcamento-aprovado');
+            const gridContainer = panel.querySelector('.charts-row') || panel.querySelector('div[style*="grid-template-columns"]');
 
-                function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
+            if (gridContainer) {
+                gridContainer.style.display = 'grid';
+                gridContainer.style.gridTemplateColumns = '1fr 1.2fr';
+                gridContainer.style.gap = '20px';
+                gridContainer.style.marginBottom = '30px';
+
+                gridContainer.innerHTML = `
+            <div class="chart-card">
+                <h4>Distribuição do Orçamento Aprovado por Setor</h4>
+                <div style="position: relative; height: 260px; display: flex; justify-content: center; align-items: center;">
+                    <canvas id="chart-orcamento-aprov-donut"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="display: flex; flex-direction: column;">
+                <h4>Resumo de Aprovação por Setor Responsável</h4>
+                <div style="overflow-y: auto; max-height: 260px; padding-right: 5px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); color: var(--accent); text-align: left;">
+                                <th style="padding: 6px;">Setor</th>
+                                <th style="padding: 6px; text-align: right;">Aprovado</th>
+                                <th style="padding: 6px; text-align: right;">% Part.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sortedSetores.map(([setor, dados], idx) => {
+                    const pct = totalGeralAprov > 0 ? ((dados.autorizado / totalGeralAprov) * 100).toFixed(1) : '0.0';
+                    const cor = paletaCores[idx % paletaCores.length];
                     return `
-            <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
-                <span style="width: 130px; text-align: right;">${fmt(p)}</span>
-                <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(aj)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(e)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(l)}</span>
-                <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
-            </span>`;
-                }
-
-                Object.keys(setores).sort().forEach(setorNome => {
-                    const grupo = setores[setorNome];
-
-                    const setorDetails = document.createElement('details');
-                    setorDetails.className = 'tree-area';
-                    setorDetails.open = false;
-
-                    const setorSummary = document.createElement('summary');
-                    setorSummary.className = 'tree-summary';
-                    setorSummary.style.background = 'transparent';
-                    setorSummary.style.borderLeft = '3px solid var(--accent)';
-                    setorSummary.style.fontWeight = '700';
-                    setorSummary.style.fontSize = '14px';
-                    setorSummary.style.color = '#ffffff';
-
-                    setorSummary.innerHTML = `
-            <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
-        ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
-                    setorDetails.appendChild(setorSummary);
-
-                    const despesasWrap = document.createElement('div');
-                    despesasWrap.className = 'tree-children-area';
-
-                    grupo.items.forEach(item => {
-                        const leaf = document.createElement('div');
-                        leaf.className = 'tree-leaf';
-
-                        const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
-
-                        leaf.innerHTML = `
-                <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
-            ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
-                        despesasWrap.appendChild(leaf);
-                    });
-
-                    setorDetails.appendChild(despesasWrap);
-                    wrap.appendChild(setorDetails);
-                });
-
-                // ===== GRÁFICO 1: Orçamento Aprovado por ED (ordenado do maior para o menor) =====
-                const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
-                const labelsED = sortedED.map(item => item[0]);
-                const valoresED = sortedED.map(item => item[1]);
-
-                const gridStyle = { color: 'rgba(255,255,255,.06)' };
-                const tickColor = '#6a82a4';
-
-                const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
-                if (chartOrcamentoED) chartOrcamentoED.destroy();
-                chartOrcamentoED = new Chart(ctxED, {
-                    type: 'bar',
-                    data: {
-                        labels: labelsED,
-                        datasets: [{
-                            label: 'Despesa Ajustada',
-                            data: valoresED,
-                            backgroundColor: '#0077b6',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
-                            y: { grid: gridStyle, ticks: { color: '#ffffff' } }
-                        }
-                    }
-                });
-
-                // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
-                // Coleta os dados e ordena do maior para o menor
-                const dadosSetores = Object.keys(setores).map(setor => {
-                    const s = setores[setor];
-                    const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
-                    return { setor, valor };
-                });
-
-                // Ordena do maior para o menor
-                dadosSetores.sort((a, b) => b.valor - a.valor);
-
-                const labelsSetores = dadosSetores.map(item => item.setor);
-                const valoresSetores = dadosSetores.map(item => item.valor);
-
-                // Paleta de cores do exemplo (azul ao vermelho)
-                const paletaCores = [
-                    '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
-                    '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
-                    '#e64d2e', '#cc3333', '#b30059', '#990066', '#800080',
-                    '#4d0099', '#0033cc'
-                ];
-
-                const coresSetores = labelsSetores.map((_, i) => paletaCores[i % paletaCores.length]);
-
-                const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
-                if (chartExecucaoSetor) chartExecucaoSetor.destroy();
-
-                // Aumenta a altura do gráfico dinamicamente baseado na quantidade de itens
-                // (alturaBase maior = mais espaço entre os rótulos/barras).
-                // IMPORTANTE: a altura precisa ser definida no DIV INTERNO (pai imediato do
-                // canvas), não no wrapper com rolagem — senão o Chart.js (responsive:true)
-                // usa a altura "visível" (400px) do wrapper para calcular o tamanho das
-                // barras, e elas voltam a ficar espremidas mesmo o card crescendo por fora.
-                const canvasExec = document.getElementById('chart-execucao-setor');
-                const innerExec = document.getElementById('chart-execucao-setor-inner');
-                const alturaBase = 42; // altura por barra (antes: 30)
-                const alturaMinima = 250;
-                const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
-                innerExec.style.height = alturaCalculada + 'px';
-                canvasExec.style.width = '100%';
-
-                chartExecucaoSetor = new Chart(ctxExec, {
-                    type: 'bar',
-                    data: {
-                        labels: labelsSetores,
-                        datasets: [{
-                            label: '% Executado',
-                            data: valoresSetores,
-                            backgroundColor: coresSetores,
-                            borderRadius: 4,
-                            borderSkipped: false,
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.7,
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { 
-                                callbacks: { 
-                                    label: function(context) {
-                                        return context.raw + '%';
-                                    }
-                                } 
-                            }
-                        },
-                        scales: {
-                            x: { 
-                                grid: gridStyle, 
-                                ticks: { color: tickColor, callback: v => v + '%' }, 
-                                max: 100 
-                            },
-                            y: { 
-                                grid: gridStyle, 
-                                ticks: { 
-                                    color: '#ffffff', 
-                                    autoSkip: false,
-                                    font: { size: 11 }
-                                } 
-                            }
-                        }
-                    }
-                });
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 6px; display: flex; align-items: center; gap: 8px;">
+                                            <span style="width: 10px; height: 10px; border-radius: 2px; background: ${cor}; display: inline-block;"></span>
+                                            <strong style="color: var(--text);">${setor}</strong>
+                                        </td>
+                                        <td style="padding: 6px; text-align: right; color: var(--text);">${fmt(dados.autorizado)}</td>
+                                        <td style="padding: 6px; text-align: right; color: var(--gold);">${pct}%</td>
+                                    </tr>
+                                `;
+                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
             }
 
-            /* ===== PANEL 1 — KPIs ===== */
-            function renderKPIs(rows) {
-                const map = {
-                    'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
-                    'cap-lib': 0, 'cap-emp': 0, 'cap-liq': 0
-                };
+            // Renderiza o gráfico Donut
+            const ctxDonut = document.getElementById('chart-orcamento-aprov-donut').getContext('2d');
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsSetores,
+                    datasets: [{
+                        data: valoresAutorizados,
+                        backgroundColor: paletaCores.slice(0, labelsSetores.length),
+                        borderColor: 'var(--card)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ' ' + ctx.label + ': ' + fmt(ctx.raw || 0)
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
 
-                rows.forEach((cols, i) => {
-                    if (i === 0 || !cols || cols.length < 3) return;
+            // 2. Monta a árvore expansível com os dados do Renomear
+            renderArvoreAprovado(rowsRenomear);
+        }
 
-                    const tipo = (cols[0] || '').trim();
-                    const metrica = (cols[1] || '').toUpperCase();
-                    const valor = limparNum(cols[2]);
+        // Função auxiliar para renderizar a árvore expansível
+        function renderArvoreAprovado(rows) {
+            const wrap = document.getElementById('arvore-orcamento-aprovado');
+            if (!wrap) return;
+            wrap.innerHTML = '';
 
-                    if (!tipo) return;
+            const setores = {};
+            rows.forEach((cols, i) => {
+                if (i === 0 || !cols || cols.length < 8) return;
+                let setor = (cols[0] || '').trim().toUpperCase();
+                if (!setor) return;
 
-                    const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
-                    const isEmp = metrica.includes('EMPENH');
-                    const isLiq = metrica.includes('LIQUID');
+                const despesa = (cols[1] || '').trim();
+                const prevInit = limparNum(cols[2]);
+                const aprovDiret = limparNum(cols[3]);
+                const despAjust = limparNum(cols[4]);
+                const empenhado = limparNum(cols[5]);
+                const liquidado = limparNum(cols[6]);
+                const pago = limparNum(cols[7]);
+                const ed = (cols[8] || '').trim();
 
-                    if (tipo === 'Custeio') {
-                        if (isDot) map['cust-lib'] = valor;
-                        if (isEmp) map['cust-emp'] = valor;
-                        if (isLiq) map['cust-liq'] = valor;
-                    } else if (tipo === 'Capital') {
-                        if (isDot) map['cap-lib'] = valor;
-                        if (isEmp) map['cap-emp'] = valor;
-                        if (isLiq) map['cap-liq'] = valor;
-                    }
+                if (!setores[setor]) {
+                    setores[setor] = { totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: [] };
+                }
+
+                setores[setor].totPrev += prevInit;
+                setores[setor].totAprov += aprovDiret;
+                setores[setor].totAjust += despAjust;
+                setores[setor].totEmp += empenhado;
+                setores[setor].totLiq += liquidado;
+                setores[setor].totPag += pago;
+                setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+            });
+
+            function valoresHTML(p, ap, aj, e, l, pg) {
+                return `
+        <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
+            <span style="width: 130px; text-align: right;">${fmt(p)}</span>
+            <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
+            <span style="width: 130px; text-align: right;">${fmt(aj)}</span>
+            <span style="width: 130px; text-align: right;">${fmt(e)}</span>
+            <span style="width: 130px; text-align: right;">${fmt(l)}</span>
+            <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
+        </span>`;
+            }
+
+            Object.keys(setores).sort().forEach(setorNome => {
+                const grupo = setores[setorNome];
+                const setorDetails = document.createElement('details');
+                setorDetails.className = 'tree-area';
+
+                const setorSummary = document.createElement('summary');
+                setorSummary.className = 'tree-summary';
+                setorSummary.style.background = 'transparent';
+                setorSummary.style.borderLeft = '3px solid var(--accent)';
+                setorSummary.style.fontWeight = '700';
+                setorSummary.style.fontSize = '14px';
+                setorSummary.style.color = '#ffffff';
+
+                setorSummary.innerHTML = `
+            <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
+        ` + valoresHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
+                setorDetails.appendChild(setorSummary);
+
+                const despesasWrap = document.createElement('div');
+                despesasWrap.className = 'tree-children-area';
+
+                grupo.items.forEach(item => {
+                    const leaf = document.createElement('div');
+                    leaf.className = 'tree-leaf';
+                    const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
+
+                    leaf.innerHTML = `
+                <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
+            ` + valoresHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
+                    despesasWrap.appendChild(leaf);
                 });
+
+                setorDetails.appendChild(despesasWrap);
+                wrap.appendChild(setorDetails);
+            });
+        }
+
+        // ===== GRÁFICO 1: Orçamento Aprovado por ED (ordenado do maior para o menor) =====
+        const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
+        const labelsED = sortedED.map(item => item[0]);
+        const valoresED = sortedED.map(item => item[1]);
+
+        const gridStyle = { color: 'rgba(255,255,255,.06)' };
+        const tickColor = '#6a82a4';
+
+        const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
+        if (chartOrcamentoED) chartOrcamentoED.destroy();
+        chartOrcamentoED = new Chart(ctxED, {
+            type: 'bar',
+            data: {
+                labels: labelsED,
+                datasets: [{
+                    label: 'Despesa Ajustada',
+                    data: valoresED,
+                    backgroundColor: '#0077b6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
+                    y: { grid: gridStyle, ticks: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
+        // Coleta os dados e ordena do maior para o menor
+        const dadosSetores = Object.keys(setores).map(setor => {
+            const s = setores[setor];
+            const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
+            return { setor, valor };
+        });
+
+        // Ordena do maior para o menor
+        dadosSetores.sort((a, b) => b.valor - a.valor);
+
+        const labelsSetores = dadosSetores.map(item => item.setor);
+        const valoresSetores = dadosSetores.map(item => item.valor);
+
+        // Paleta de cores do exemplo (azul ao vermelho)
+        const paletaCores = [
+            '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
+            '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
+            '#e64d2e', '#cc3333', '#b30059', '#990066', '#800080',
+            '#4d0099', '#0033cc'
+        ];
+
+        const coresSetores = labelsSetores.map((_, i) => paletaCores[i % paletaCores.length]);
+
+        const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
+        if (chartExecucaoSetor) chartExecucaoSetor.destroy();
+
+        // Aumenta a altura do gráfico dinamicamente baseado na quantidade de itens
+        // (alturaBase maior = mais espaço entre os rótulos/barras).
+        // IMPORTANTE: a altura precisa ser definida no DIV INTERNO (pai imediato do
+        // canvas), não no wrapper com rolagem — senão o Chart.js (responsive:true)
+        // usa a altura "visível" (400px) do wrapper para calcular o tamanho das
+        // barras, e elas voltam a ficar espremidas mesmo o card crescendo por fora.
+        const canvasExec = document.getElementById('chart-execucao-setor');
+        const innerExec = document.getElementById('chart-execucao-setor-inner');
+        const alturaBase = 42; // altura por barra (antes: 30)
+        const alturaMinima = 250;
+        const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
+        innerExec.style.height = alturaCalculada + 'px';
+        canvasExec.style.width = '100%';
+
+        chartExecucaoSetor = new Chart(ctxExec, {
+            type: 'bar',
+            data: {
+                labels: labelsSetores,
+                datasets: [{
+                    label: '% Executado',
+                    data: valoresSetores,
+                    backgroundColor: coresSetores,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.7,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.raw + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: gridStyle,
+                        ticks: { color: tickColor, callback: v => v + '%' },
+                        max: 100
+                    },
+                    y: {
+                        grid: gridStyle,
+                        ticks: {
+                            color: '#ffffff',
+                            autoSkip: false,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+
+
+        /* ===== PANEL 1 — KPIs ===== */
+        function renderKPIs(rows) {
+            const map = {
+                'cust-lib': 0, 'cust-emp': 0, 'cust-liq': 0,
+                'cap-lib': 0, 'cap-emp': 0, 'cap-liq': 0
+            };
+
+            rows.forEach((cols, i) => {
+                if (i === 0 || !cols || cols.length < 3) return;
+
+                const tipo = (cols[0] || '').trim();
+                const metrica = (cols[1] || '').toUpperCase();
+                const valor = limparNum(cols[2]);
+
+                if (!tipo) return;
+
+                const isDot = metrica.includes('DOTACAO') || metrica.includes('DOTAÇÃO') || metrica.includes('LIBERADO');
+                const isEmp = metrica.includes('EMPENH');
+                const isLiq = metrica.includes('LIQUID');
+
+                if (tipo === 'Custeio') {
+                    if (isDot) map['cust-lib'] = valor;
+                    if (isEmp) map['cust-emp'] = valor;
+                    if (isLiq) map['cust-liq'] = valor;
+                } else if (tipo === 'Capital') {
+                    if (isDot) map['cap-lib'] = valor;
+                    if (isEmp) map['cap-emp'] = valor;
+                    if (isLiq) map['cap-liq'] = valor;
+                }
+            });
 
                 map['tot-lib'] = map['cust-lib'] + map['cap-lib'];
                 map['tot-emp'] = map['cust-emp'] + map['cap-emp'];
