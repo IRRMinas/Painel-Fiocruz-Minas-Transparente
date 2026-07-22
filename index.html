@@ -35,7 +35,6 @@
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: #ffffff;
-            /* Deixa as laterais e o topo totalmente brancos */
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -47,13 +46,10 @@
         .dashboard-container {
             width: 100%;
             max-width: 1680px;
-            /* Aumentado de 1366px para 1440px para dar mais espaço e não cortar o texto */
             background: var(--bg);
             margin-top: 15px;
             margin-bottom: 30px;
-            /* Margem opcional para desgrudar do rodapé da página */
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            /* Sombra um pouco mais suave no fundo branco */
             border: 1px solid var(--border);
             border-radius: 4px;
             overflow: hidden;
@@ -309,9 +305,6 @@
             padding-right: 8px;
         }
 
-        /* Este gráfico tem altura dinâmica (definida via JS) para dar espaço entre as
-           barras/rótulos; a regra geral de max-height:280px do .chart-card canvas
-           não deve limitá-lo — quem controla o "recorte" visível é o wrapper acima. */
         .chart-scroll-wrapper canvas {
             max-height: none !important;
         }
@@ -1108,7 +1101,6 @@
                 </div>
                 <div class="chart-card">
                     <h4>% Execução Orçamentária por Setor (Empenhado / Previsão Atualizada)</h4>
-                    <!-- Wrapper com rolagem para o gráfico de barras -->
                     <div class="chart-scroll-wrapper">
                         <div id="chart-execucao-setor-inner" style="position: relative; width: 100%;">
                             <canvas id="chart-execucao-setor"></canvas>
@@ -1117,10 +1109,14 @@
                 </div>
             </div>
 
-            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor -->
+            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor (COM ROLAGEM) -->
             <div class="chart-card" style="margin-bottom: 24px;">
                 <h4>Orçamento Aprovado por Setor — Previsto x Autorizado x Executado</h4>
-                <canvas id="chart-orcamento-aprovado" style="max-height: 400px;"></canvas>
+                <div class="chart-scroll-wrapper">
+                    <div id="chart-orcamento-aprovado-inner" style="position: relative; width: 100%;">
+                        <canvas id="chart-orcamento-aprovado"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="tree-wrap">
@@ -1147,7 +1143,7 @@
                 painel: '61010976',
                 prop: '0',
                 renomear: '1008333824',
-                orcarAprov: '2137044025' // NOVO: ID da aba "orçar-aprov"
+                orcarAprov: '2137044025'
             };
 
             function csvUrl(gid) {
@@ -1241,7 +1237,7 @@
                         fetchCSV(GIDS.painel),
                         fetchCSV(GIDS.prop),
                         fetchCSV(GIDS.renomear),
-                        fetchCSV(GIDS.orcarAprov) // Carrega a nova aba
+                        fetchCSV(GIDS.orcarAprov)
                     ]);
 
                     renderKPIs(csvPainel);
@@ -1249,7 +1245,6 @@
                     renderDetalhamento(csvProp);
                     renderAporteIndireto(csvPainel);
 
-                    // Renderiza os gráficos existentes e o NOVO gráfico da aba "orçar-aprov"
                     renderOrcamentoAprovado(csvRenomear, csvOrcarAprov);
 
                     const agora = new Date();
@@ -1265,8 +1260,7 @@
                 }
             });
 
-            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS DOIS GRÁFICOS ===== */
-            // Modificado para aceitar os dados da nova aba (csvOrcarAprov)
+            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS TRÊS GRÁFICOS ===== */
             function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
                 const wrap = document.getElementById('arvore-orcamento-aprovado');
                 wrap.innerHTML = '';
@@ -1274,7 +1268,7 @@
                 const setores = {};
                 const dadosED = {};
 
-                // Processa os dados da aba "Renomear" (para a árvore e gráficos existentes)
+                // Processa os dados da aba "Renomear"
                 rowsRenomear.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 8) return;
 
@@ -1362,7 +1356,7 @@
                     wrap.appendChild(setorDetails);
                 });
 
-                // ===== GRÁFICO 1: Orçamento Aprovado por ED (ordenado do maior para o menor) =====
+                // ===== GRÁFICO 1: Orçamento Aprovado por ED =====
                 const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
                 const labelsED = sortedED.map(item => item[0]);
                 const valoresED = sortedED.map(item => item[1]);
@@ -1395,7 +1389,7 @@
                     }
                 });
 
-                // ===== GRÁFICO 2: % Execução por Setor (Barras Horizontais com rolagem e ordenado) =====
+                // ===== GRÁFICO 2: % Execução por Setor =====
                 const dadosSetores = Object.keys(setores).map(setor => {
                     const s = setores[setor];
                     const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
@@ -1473,8 +1467,7 @@
                     }
                 });
 
-                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor (Previsto x Autorizado x Executado) =====
-                // Processa os dados da nova aba "orçar-aprov"
+                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor (COM ROLAGEM) =====
                 const dadosOrcarAprov = {};
                 rowsOrcarAprov.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 5) return;
@@ -1486,7 +1479,6 @@
 
                     if (!setor || (previsto === 0 && autorizado === 0 && executado === 0)) return;
 
-                    // Agrupa os dados por setor, somando os valores
                     if (!dadosOrcarAprov[setor]) {
                         dadosOrcarAprov[setor] = { previsto: 0, autorizado: 0, executado: 0 };
                     }
@@ -1506,6 +1498,15 @@
                 const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
                 if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
 
+                // Configura o container com rolagem (mesmo padrão do gráfico de % execução)
+                const canvasAprov = document.getElementById('chart-orcamento-aprovado');
+                const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
+                const alturaBaseAprov = 50; // um pouco mais de espaço para 3 barras por setor
+                const alturaMinimaAprov = 250;
+                const alturaCalculadaAprov = Math.max(alturaMinimaAprov, labelsOrcarAprov.length * alturaBaseAprov);
+                innerAprov.style.height = alturaCalculadaAprov + 'px';
+                canvasAprov.style.width = '100%';
+
                 chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
                     type: 'bar',
                     data: {
@@ -1516,7 +1517,8 @@
                                 data: previstoData,
                                 backgroundColor: '#e0605a',
                                 borderRadius: 4,
-                                barPercentage: 0.8,
+                                borderSkipped: false,
+                                barPercentage: 0.7,
                                 categoryPercentage: 0.7,
                             },
                             {
@@ -1524,7 +1526,8 @@
                                 data: autorizadoData,
                                 backgroundColor: '#4a7ebb',
                                 borderRadius: 4,
-                                barPercentage: 0.8,
+                                borderSkipped: false,
+                                barPercentage: 0.7,
                                 categoryPercentage: 0.7,
                             },
                             {
@@ -1532,15 +1535,16 @@
                                 data: executadoData,
                                 backgroundColor: '#22c55e',
                                 borderRadius: 4,
-                                barPercentage: 0.8,
+                                borderSkipped: false,
+                                barPercentage: 0.7,
                                 categoryPercentage: 0.7,
                             }
                         ]
                     },
                     options: {
-                        indexAxis: 'y', // Gráfico de barras horizontais
+                        indexAxis: 'y',
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 labels: { 
@@ -1572,13 +1576,20 @@
                                 grid: gridStyle,
                                 ticks: { 
                                     color: '#ffffff',
-                                    font: { size: 11 }
+                                    font: { size: 11 },
+                                    autoSkip: false
                                 }
                             }
                         }
                     }
                 });
             }
+
+            // ============================================================
+            // As funções renderKPIs, renderGraficos, renderDetalhamento,
+            // renderAporteIndireto e todas as suas dependências permanecem
+            // exatamente como estavam no código original.
+            // ============================================================
 
             /* ===== PANEL 1 — KPIs ===== */
             function renderKPIs(rows) {
