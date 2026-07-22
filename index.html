@@ -1109,9 +1109,27 @@
                 </div>
             </div>
 
-            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor (COM ROLAGEM) -->
+            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor — estilo bullet chart, em % -->
             <div class="chart-card" style="margin-bottom: 24px;">
-                <h4>Orçamento Aprovado por Setor — Previsto x Autorizado x Executado</h4>
+                <h4>Orçamento Aprovado por Setor — % Autorizado e % Executado sobre o Previsto</h4>
+                <p style="color: var(--muted); font-size: 12px; margin: -6px 0 14px 0;">
+                    Cada linha representa um setor. A barra mostra quanto foi autorizado e executado em relação a
+                    100% do valor previsto (linha tracejada).
+                </p>
+                <div style="display: flex; gap: 22px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;">
+                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
+                        <span style="width:16px; height:10px; background:#3fa9dc; border-radius:2px; display:inline-block;"></span>
+                        Autorizado
+                    </span>
+                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
+                        <span style="width:16px; height:5px; background:#22c55e; border-radius:2px; display:inline-block;"></span>
+                        Executado
+                    </span>
+                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
+                        <span style="width:16px; height:0; border-top:2px dashed rgba(255,255,255,.55); display:inline-block;"></span>
+                        Previsto (100%)
+                    </span>
+                </div>
                 <div class="chart-scroll-wrapper">
                     <div id="chart-orcamento-aprovado-inner" style="position: relative; width: 100%;">
                         <canvas id="chart-orcamento-aprovado"></canvas>
@@ -1467,7 +1485,7 @@
                     }
                 });
 
-                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor (COM ROLAGEM) =====
+                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor — bullet chart em % =====
                 const dadosOrcarAprov = {};
                 rowsOrcarAprov.forEach((cols, i) => {
                     if (i === 0 || !cols || cols.length < 5) return;
@@ -1495,17 +1513,46 @@
                 const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
                 const executadoData = sortedSetores.map(s => dadosOrcarAprov[s].executado);
 
+                // Converte para % sobre o Previsto (base = 100%)
+                const autorizadoPct = sortedSetores.map((s, idx) =>
+                    previstoData[idx] > 0 ? (autorizadoData[idx] / previstoData[idx]) * 100 : 0);
+                const executadoPct = sortedSetores.map((s, idx) =>
+                    previstoData[idx] > 0 ? (executadoData[idx] / previstoData[idx]) * 100 : 0);
+
                 const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
                 if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
 
                 // Configura o container com rolagem (mesmo padrão do gráfico de % execução)
                 const canvasAprov = document.getElementById('chart-orcamento-aprovado');
                 const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
-                const alturaBaseAprov = 50; // um pouco mais de espaço para 3 barras por setor
-                const alturaMinimaAprov = 250;
+                const alturaBaseAprov = 34; // uma única linha por setor agora, então cabe mais compacto
+                const alturaMinimaAprov = 260;
                 const alturaCalculadaAprov = Math.max(alturaMinimaAprov, labelsOrcarAprov.length * alturaBaseAprov);
                 innerAprov.style.height = alturaCalculadaAprov + 'px';
                 canvasAprov.style.width = '100%';
+
+                // Eixo X dinâmico, sempre mostrando ao menos até 100% + folga
+                const maiorPct = Math.max(100, ...autorizadoPct, ...executadoPct);
+                const xMaxAprov = Math.ceil((maiorPct + 15) / 10) * 10;
+
+                // Plugin local: desenha a linha tracejada em 100% (referência do Previsto)
+                const linhaPrevistoPlugin = {
+                    id: 'linhaPrevisto',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return;
+                        const xPos = scales.x.getPixelForValue(100);
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                        ctx.setLineDash([4, 4]);
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(xPos, chartArea.top);
+                        ctx.lineTo(xPos, chartArea.bottom);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                };
 
                 chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
                     type: 'bar',
@@ -1513,68 +1560,64 @@
                         labels: labelsOrcarAprov,
                         datasets: [
                             {
-                                label: 'Previsto',
-                                data: previstoData,
-                                backgroundColor: '#e0605a',
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
-                            },
-                            {
                                 label: 'Autorizado',
-                                data: autorizadoData,
-                                backgroundColor: '#4a7ebb',
-                                borderRadius: 4,
+                                data: autorizadoPct,
+                                backgroundColor: '#3fa9dc',
+                                borderRadius: 3,
                                 borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
+                                barThickness: 20,
                             },
                             {
                                 label: 'Executado',
-                                data: executadoData,
+                                data: executadoPct,
                                 backgroundColor: '#22c55e',
-                                borderRadius: 4,
+                                borderRadius: 2,
                                 borderSkipped: false,
-                                barPercentage: 0.7,
-                                categoryPercentage: 0.7,
+                                barThickness: 8,
                             }
                         ]
                     },
+                    plugins: [linhaPrevistoPlugin],
                     options: {
                         indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        datasets: {
+                            bar: { grouped: false }
+                        },
                         plugins: {
-                            legend: {
-                                labels: { 
-                                    color: '#e8edf5',
-                                    font: { size: 12 },
-                                    boxWidth: 15,
-                                    padding: 15
-                                }
-                            },
+                            legend: { display: false }, // legenda customizada em HTML acima do gráfico
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + fmt(context.raw);
+                                    title: (items) => items[0].label,
+                                    label: function (context) {
+                                        const idx = context.dataIndex;
+                                        const valorReal = context.dataset.label === 'Autorizado'
+                                            ? autorizadoData[idx]
+                                            : executadoData[idx];
+                                        return `${context.dataset.label}: ${context.raw.toFixed(1)}% (${fmt(valorReal)})`;
+                                    },
+                                    afterBody: function (items) {
+                                        const idx = items[0].dataIndex;
+                                        return [`Previsto: ${fmt(previstoData[idx])} (100%)`];
                                     }
                                 }
                             }
                         },
                         scales: {
                             x: {
+                                min: 0,
+                                max: xMaxAprov,
                                 grid: gridStyle,
-                                ticks: { 
+                                ticks: {
                                     color: tickColor,
-                                    callback: function(value) {
-                                        return fmtShort(value);
-                                    }
+                                    callback: (value) => value + '%'
                                 }
                             },
                             y: {
                                 grid: gridStyle,
-                                ticks: { 
+                                ticks: {
                                     color: '#ffffff',
                                     font: { size: 11 },
                                     autoSkip: false
