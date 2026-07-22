@@ -1109,25 +1109,30 @@
                 </div>
             </div>
 
-            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor — estilo bullet chart, em % -->
+            <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor — barra de progresso (% Executado do Autorizado) -->
             <div class="chart-card" style="margin-bottom: 24px;">
-                <h4>Orçamento Aprovado por Setor — % Autorizado e % Executado sobre o Previsto</h4>
+                <h4>Execução do Orçamento Aprovado por Setor</h4>
                 <p style="color: var(--muted); font-size: 12px; margin: -6px 0 14px 0;">
-                    Cada linha representa um setor. A barra mostra quanto foi autorizado e executado em relação a
-                    100% do valor previsto (linha tracejada).
+                    Cada barra mostra quanto do valor <strong>autorizado</strong> já foi <strong>executado</strong>.
+                    A cor indica o ritmo de execução. Setores com nome em laranja sofreram corte na aprovação
+                    (Previsto → Autorizado) — o percentual do corte aparece ao lado do nome.
                 </p>
-                <div style="display: flex; gap: 22px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 18px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;">
                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
-                        <span style="width:16px; height:10px; background:#3fa9dc; border-radius:2px; display:inline-block;"></span>
-                        Autorizado
+                        <span style="width:14px; height:14px; background:#ef4444; border-radius:3px; display:inline-block;"></span>
+                        Execução baixa (&lt;30%)
                     </span>
                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
-                        <span style="width:16px; height:5px; background:#22c55e; border-radius:2px; display:inline-block;"></span>
-                        Executado
+                        <span style="width:14px; height:14px; background:#f0a500; border-radius:3px; display:inline-block;"></span>
+                        Moderada (30–60%)
                     </span>
                     <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
-                        <span style="width:16px; height:0; border-top:2px dashed rgba(255,255,255,.55); display:inline-block;"></span>
-                        Previsto (100%)
+                        <span style="width:14px; height:14px; background:#22c55e; border-radius:3px; display:inline-block;"></span>
+                        Boa (&gt;60%)
+                    </span>
+                    <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:#e8edf5;">
+                        <span style="width:14px; height:14px; background:#a855f7; border-radius:3px; display:inline-block;"></span>
+                        Executado acima do autorizado
                     </span>
                 </div>
                 <div class="chart-scroll-wrapper">
@@ -1508,16 +1513,33 @@
                 // Ordena os setores pelo valor de 'previsto' (do maior para o menor)
                 const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => dadosOrcarAprov[b].previsto - dadosOrcarAprov[a].previsto);
 
-                const labelsOrcarAprov = sortedSetores;
                 const previstoData = sortedSetores.map(s => dadosOrcarAprov[s].previsto);
                 const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
                 const executadoData = sortedSetores.map(s => dadosOrcarAprov[s].executado);
 
-                // Converte para % sobre o Previsto (base = 100%)
-                const autorizadoPct = sortedSetores.map((s, idx) =>
-                    previstoData[idx] > 0 ? (autorizadoData[idx] / previstoData[idx]) * 100 : 0);
-                const executadoPct = sortedSetores.map((s, idx) =>
-                    previstoData[idx] > 0 ? (executadoData[idx] / previstoData[idx]) * 100 : 0);
+                // Métrica principal: % Executado sobre o Autorizado (é o valor realmente disponível)
+                const execPct = sortedSetores.map((s, idx) =>
+                    autorizadoData[idx] > 0 ? (executadoData[idx] / autorizadoData[idx]) * 100 : 0);
+
+                // Corte na aprovação: quanto o Autorizado ficou abaixo do Previsto (só sinaliza cortes reais, >1%)
+                const cortePct = sortedSetores.map((s, idx) =>
+                    previstoData[idx] > 0 ? ((autorizadoData[idx] - previstoData[idx]) / previstoData[idx]) * 100 : 0);
+
+                // Rótulos do eixo Y: nome do setor + aviso de corte quando existir
+                const labelsOrcarAprov = sortedSetores.map((s, idx) => {
+                    if (cortePct[idx] < -1) return `${s}  ⚠ ${cortePct[idx].toFixed(0)}%`;
+                    if (autorizadoData[idx] === 0 && previstoData[idx] > 0) return `${s}  ⚠ não autorizado`;
+                    return s;
+                });
+
+                // Cor de cada barra conforme o ritmo de execução (vermelho/dourado/verde/roxo se passou do autorizado)
+                function corExecucao(pct) {
+                    if (pct > 100) return '#a855f7';
+                    if (pct < 30) return '#ef4444';
+                    if (pct < 60) return '#f0a500';
+                    return '#22c55e';
+                }
+                const coresExecucao = execPct.map(corExecucao);
 
                 const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
                 if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
@@ -1525,34 +1547,15 @@
                 // Configura o container com rolagem (mesmo padrão do gráfico de % execução)
                 const canvasAprov = document.getElementById('chart-orcamento-aprovado');
                 const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
-                const alturaBaseAprov = 34; // uma única linha por setor agora, então cabe mais compacto
+                const alturaBaseAprov = 34; // uma única linha por setor, larguras idênticas
                 const alturaMinimaAprov = 260;
                 const alturaCalculadaAprov = Math.max(alturaMinimaAprov, labelsOrcarAprov.length * alturaBaseAprov);
                 innerAprov.style.height = alturaCalculadaAprov + 'px';
                 canvasAprov.style.width = '100%';
 
-                // Eixo X dinâmico, sempre mostrando ao menos até 100% + folga
-                const maiorPct = Math.max(100, ...autorizadoPct, ...executadoPct);
-                const xMaxAprov = Math.ceil((maiorPct + 15) / 10) * 10;
-
-                // Plugin local: desenha a linha tracejada em 100% (referência do Previsto)
-                const linhaPrevistoPlugin = {
-                    id: 'linhaPrevisto',
-                    afterDatasetsDraw(chart) {
-                        const { ctx, chartArea, scales } = chart;
-                        if (!chartArea) return;
-                        const xPos = scales.x.getPixelForValue(100);
-                        ctx.save();
-                        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-                        ctx.setLineDash([4, 4]);
-                        ctx.lineWidth = 1.5;
-                        ctx.beginPath();
-                        ctx.moveTo(xPos, chartArea.top);
-                        ctx.lineTo(xPos, chartArea.bottom);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                };
+                // Eixo X: 0 a 100% (com folga se algum setor executou acima do autorizado)
+                const maiorPct = Math.max(100, ...execPct);
+                const xMaxAprov = maiorPct > 100 ? Math.ceil((maiorPct + 15) / 10) * 10 : 100;
 
                 chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
                     type: 'bar',
@@ -1560,24 +1563,25 @@
                         labels: labelsOrcarAprov,
                         datasets: [
                             {
-                                label: 'Autorizado',
-                                data: autorizadoPct,
-                                backgroundColor: '#3fa9dc',
-                                borderRadius: 3,
+                                // Trilho de fundo: sempre 100% do Autorizado, cor neutra
+                                label: 'Autorizado (base)',
+                                data: sortedSetores.map(() => 100),
+                                backgroundColor: 'rgba(255,255,255,0.08)',
+                                borderRadius: 4,
                                 borderSkipped: false,
                                 barThickness: 20,
                             },
                             {
+                                // Barra de progresso: % Executado sobre o Autorizado
                                 label: 'Executado',
-                                data: executadoPct,
-                                backgroundColor: '#22c55e',
-                                borderRadius: 2,
+                                data: execPct,
+                                backgroundColor: coresExecucao,
+                                borderRadius: 4,
                                 borderSkipped: false,
-                                barThickness: 8,
+                                barThickness: 20,
                             }
                         ]
                     },
-                    plugins: [linhaPrevistoPlugin],
                     options: {
                         indexAxis: 'y',
                         responsive: true,
@@ -1590,17 +1594,19 @@
                             legend: { display: false }, // legenda customizada em HTML acima do gráfico
                             tooltip: {
                                 callbacks: {
-                                    title: (items) => items[0].label,
+                                    title: (items) => sortedSetores[items[0].dataIndex],
                                     label: function (context) {
+                                        if (context.datasetIndex === 0) return null; // não mostra o trilho de fundo
                                         const idx = context.dataIndex;
-                                        const valorReal = context.dataset.label === 'Autorizado'
-                                            ? autorizadoData[idx]
-                                            : executadoData[idx];
-                                        return `${context.dataset.label}: ${context.raw.toFixed(1)}% (${fmt(valorReal)})`;
+                                        return `Executado: ${execPct[idx].toFixed(1)}% do autorizado (${fmt(executadoData[idx])} de ${fmt(autorizadoData[idx])})`;
                                     },
                                     afterBody: function (items) {
                                         const idx = items[0].dataIndex;
-                                        return [`Previsto: ${fmt(previstoData[idx])} (100%)`];
+                                        const linhas = [`Previsto: ${fmt(previstoData[idx])}`];
+                                        if (cortePct[idx] < -1) {
+                                            linhas.push(`Corte na aprovação: ${cortePct[idx].toFixed(1)}%`);
+                                        }
+                                        return linhas;
                                     }
                                 }
                             }
@@ -1618,7 +1624,13 @@
                             y: {
                                 grid: gridStyle,
                                 ticks: {
-                                    color: '#ffffff',
+                                    color: (ctx) => {
+                                        const idx = ctx.index;
+                                        if (cortePct[idx] < -1 || (autorizadoData[idx] === 0 && previstoData[idx] > 0)) {
+                                            return '#f0a500';
+                                        }
+                                        return '#ffffff';
+                                    },
                                     font: { size: 11 },
                                     autoSkip: false
                                 }
