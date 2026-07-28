@@ -1601,9 +1601,9 @@
                                             linhas.push(`Falta executar: ${fmt(saldo)} (${(100 - execPct[idx]).toFixed(1)}% do autorizado)`);
                                         } else {
                                             linhas.push(`Executou ${fmt(Math.abs(saldo))} acima do autorizado`);
-                                        }
-                                        if (cortePct[idx] < -1) {
-                                            linhas.push(`Corte na aprovação: ${cortePct[idx].toFixed(1)}%`);
+                                        //}
+                                        //if (cortePct[idx] < -1) {
+                                            //linhas.push(`Corte na aprovação: ${cortePct[idx].toFixed(1)}%`);
                                         }
                                         return linhas;
                                     }
