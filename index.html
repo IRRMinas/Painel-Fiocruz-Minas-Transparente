@@ -1272,376 +1272,277 @@
                 }
             });
 
-            /* ===== ATUALIZADO: ÁRVORE EXPANSÍVEL E CRIAÇÃO DOS TRÊS GRÁFICOS ===== */
-            function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
-                const wrap = document.getElementById('arvore-orcamento-aprovado');
-                wrap.innerHTML = '';
+/* ===== ATUALIZADO: GRÁFICO PREVISÃO X EMPENHO ATÉ O MÊS CORRENTE ===== */
+function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
+    const wrap = document.getElementById('arvore-orcamento-aprovado');
+    wrap.innerHTML = '';
 
-                const setores = {};
-                const dadosED = {};
+    const setores = {};
+    const dadosED = {};
 
-                // Processa os dados da aba "Renomear"
-                rowsRenomear.forEach((cols, i) => {
-                    if (i === 0 || !cols || cols.length < 8) return;
+    // Processa a aba "Renomear" para a árvore e gráficos existentes
+    rowsRenomear.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 8) return;
 
-                    let setor = (cols[0] || '').trim().toUpperCase();
-                    if (!setor) return;
+        let setor = (cols[0] || '').trim().toUpperCase();
+        if (!setor) return;
 
-                    const despesa = (cols[1] || '').trim();
-                    const prevInit = limparNum(cols[2]);
-                    const aprovDiret = limparNum(cols[3]);
-                    const despAjust = limparNum(cols[4]);
-                    const empenhado = limparNum(cols[5]);
-                    const liquidado = limparNum(cols[6]);
-                    const pago = limparNum(cols[7]);
-                    const ed = (cols[8] || '').trim();
+        const despesa = (cols[1] || '').trim();
+        const prevInit = limparNum(cols[2]);
+        const aprovDiret = limparNum(cols[3]);
+        const despAjust = limparNum(cols[4]);
+        const empenhado = limparNum(cols[5]);
+        const liquidado = limparNum(cols[6]);
+        const pago = limparNum(cols[7]);
+        const ed = (cols[8] || '').trim();
 
-                    if (!setores[setor]) {
-                        setores[setor] = {
-                            totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: []
-                        };
-                    }
+        if (!setores[setor]) {
+            setores[setor] = { totPrev: 0, totAprov: 0, totAjust: 0, totEmp: 0, totLiq: 0, totPag: 0, items: [] };
+        }
 
-                    setores[setor].totPrev += prevInit;
-                    setores[setor].totAprov += aprovDiret;
-                    setores[setor].totAjust += despAjust;
-                    setores[setor].totEmp += empenhado;
-                    setores[setor].totLiq += liquidado;
-                    setores[setor].totPag += pago;
+        setores[setor].totPrev += prevInit;
+        setores[setor].totAprov += aprovDiret;
+        setores[setor].totAjust += despAjust;
+        setores[setor].totEmp += empenhado;
+        setores[setor].totLiq += liquidado;
+        setores[setor].totPag += pago;
 
-                    setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
+        setores[setor].items.push({ despesa, prevInit, aprovDiret, despAjust, empenhado, liquidado, pago, ed });
 
-                    if (ed) {
-                        const labelED = "ED " + ed;
-                        dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
-                    }
-                });
+        if (ed) {
+            const labelED = "ED " + ed;
+            dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
+        }
+    });
 
-                function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
-                    return `
-                <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
-                    <span style="width: 130px; text-align: right;">${fmt(p)}</span>
-                    <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
-                    <span style="width: 160px; text-align: right;">${fmt(aj)}</span>
-                    <span style="width: 130px; text-align: right;">${fmt(e)}</span>
-                    <span style="width: 130px; text-align: right;">${fmt(l)}</span>
-                    <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
-                </span>`;
-                }
+    function valoresOrcamentoHTML(p, ap, aj, e, l, pg) {
+        return `
+    <span class="tree-values" style="width: auto; gap: 0; padding-right: 20px;">
+        <span style="width: 130px; text-align: right;">${fmt(p)}</span>
+        <span style="width: 160px; text-align: right;">${fmt(ap)}</span>
+        <span style="width: 160px; text-align: right;">${fmt(aj)}</span>
+        <span style="width: 130px; text-align: right;">${fmt(e)}</span>
+        <span style="width: 130px; text-align: right;">${fmt(l)}</span>
+        <span style="width: 130px; text-align: right;">${fmt(pg)}</span>
+    </span>`;
+    }
 
-                Object.keys(setores).sort().forEach(setorNome => {
-                    const grupo = setores[setorNome];
+    Object.keys(setores).sort().forEach(setorNome => {
+        const grupo = setores[setorNome];
+        const setorDetails = document.createElement('details');
+        setorDetails.className = 'tree-area';
+        setorDetails.open = false;
 
-                    const setorDetails = document.createElement('details');
-                    setorDetails.className = 'tree-area';
-                    setorDetails.open = false;
+        const setorSummary = document.createElement('summary');
+        setorSummary.className = 'tree-summary';
+        setorSummary.style.background = 'transparent';
+        setorSummary.style.borderLeft = '3px solid var(--accent)';
+        setorSummary.style.fontWeight = '700';
+        setorSummary.style.fontSize = '14px';
+        setorSummary.style.color = '#ffffff';
 
-                    const setorSummary = document.createElement('summary');
-                    setorSummary.className = 'tree-summary';
-                    setorSummary.style.background = 'transparent';
-                    setorSummary.style.borderLeft = '3px solid var(--accent)';
-                    setorSummary.style.fontWeight = '700';
-                    setorSummary.style.fontSize = '14px';
-                    setorSummary.style.color = '#ffffff';
+        setorSummary.innerHTML = `
+    <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
+` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
+        setorDetails.appendChild(setorSummary);
 
-                    setorSummary.innerHTML = `
-                <span class="tree-label"><span class="tree-toggle" style="background: rgba(0, 194, 224, 0.15); color: var(--accent);"></span>${setorNome}</span>
-            ` + valoresOrcamentoHTML(grupo.totPrev, grupo.totAprov, grupo.totAjust, grupo.totEmp, grupo.totLiq, grupo.totPag);
-                    setorDetails.appendChild(setorSummary);
+        const despesasWrap = document.createElement('div');
+        despesasWrap.className = 'tree-children-area';
 
-                    const despesasWrap = document.createElement('div');
-                    despesasWrap.className = 'tree-children-area';
+        grupo.items.forEach(item => {
+            const leaf = document.createElement('div');
+            leaf.className = 'tree-leaf';
+            const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
 
-                    grupo.items.forEach(item => {
-                        const leaf = document.createElement('div');
-                        leaf.className = 'tree-leaf';
+            leaf.innerHTML = `
+        <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
+    ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
+            despesasWrap.appendChild(leaf);
+        });
 
-                        const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
+        setorDetails.appendChild(despesasWrap);
+        wrap.appendChild(setorDetails);
+    });
 
-                        leaf.innerHTML = `
-                    <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
-                ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
-                        despesasWrap.appendChild(leaf);
-                    });
+    // ===== GRÁFICO 1: ED (Efeito visual mantido) =====
+    const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
+    const gridStyle = { color: 'rgba(255,255,255,.06)' };
+    const tickColor = '#6a82a4';
 
-                    setorDetails.appendChild(despesasWrap);
-                    wrap.appendChild(setorDetails);
-                });
-
-                // ===== GRÁFICO 1: Orçamento Aprovado por ED =====
-                const sortedED = Object.entries(dadosED).sort((a, b) => b[1] - a[1]);
-                const labelsED = sortedED.map(item => item[0]);
-                const valoresED = sortedED.map(item => item[1]);
-
-                const gridStyle = { color: 'rgba(255,255,255,.06)' };
-                const tickColor = '#6a82a4';
-
-                const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
-                if (chartOrcamentoED) chartOrcamentoED.destroy();
-                chartOrcamentoED = new Chart(ctxED, {
-                    type: 'bar',
-                    data: {
-                        labels: labelsED,
-                        datasets: [{
-                            label: 'Despesa Ajustada',
-                            data: valoresED,
-                            backgroundColor: '#0077b6',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
-                            y: { grid: gridStyle, ticks: { color: '#ffffff' } }
-                        }
-                    }
-                });
-
-                // ===== GRÁFICO 2: % Execução por Setor =====
-                const dadosSetores = Object.keys(setores).map(setor => {
-                    const s = setores[setor];
-                    const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
-                    return { setor, valor };
-                });
-
-                dadosSetores.sort((a, b) => b.valor - a.valor);
-
-                const labelsSetores = dadosSetores.map(item => item.setor);
-                const valoresSetores = dadosSetores.map(item => item.valor);
-
-                const paletaCores = [
-                    '#0066b3', '#0099cc', '#00b3b3', '#33cc99', '#66cc66',
-                    '#99cc33', '#cccc33', '#ffcc33', '#ff9933', '#ff6633',
-                    '#e64d2e', '#cc3333', '#b30059', '#990066', '#800080',
-                    '#4d0099', '#0033cc'
-                ];
-
-                const coresSetores = labelsSetores.map((_, i) => paletaCores[i % paletaCores.length]);
-
-                const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
-                if (chartExecucaoSetor) chartExecucaoSetor.destroy();
-
-                const canvasExec = document.getElementById('chart-execucao-setor');
-                const innerExec = document.getElementById('chart-execucao-setor-inner');
-                const alturaBase = 42;
-                const alturaMinima = 250;
-                const alturaCalculada = Math.max(alturaMinima, labelsSetores.length * alturaBase);
-                innerExec.style.height = alturaCalculada + 'px';
-                canvasExec.style.width = '100%';
-
-                chartExecucaoSetor = new Chart(ctxExec, {
-                    type: 'bar',
-                    data: {
-                        labels: labelsSetores,
-                        datasets: [{
-                            label: '% Executado',
-                            data: valoresSetores,
-                            backgroundColor: coresSetores,
-                            borderRadius: 4,
-                            borderSkipped: false,
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.7,
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { 
-                                callbacks: { 
-                                    label: function(context) {
-                                        return context.raw + '%';
-                                    }
-                                } 
-                            }
-                        },
-                        scales: {
-                            x: { 
-                                grid: gridStyle, 
-                                ticks: { color: tickColor, callback: v => v + '%' }, 
-                                max: 100 
-                            },
-                            y: { 
-                                grid: gridStyle, 
-                                ticks: { 
-                                    color: '#ffffff', 
-                                    autoSkip: false,
-                                    font: { size: 11 }
-                                } 
-                            }
-                        }
-                    }
-                });
-
-                // ===== NOVO GRÁFICO 3: Orçamento Aprovado por Setor — bullet chart em % =====
-                const dadosOrcarAprov = {};
-                rowsOrcarAprov.forEach((cols, i) => {
-                    if (i === 0 || !cols || cols.length < 5) return;
-                    const descricao = (cols[0] || '').trim();
-                    const setor = (cols[1] || '').trim().toUpperCase();
-                    const previsto = limparNum(cols[2]);
-                    const autorizado = limparNum(cols[3]);
-                    const executado = limparNum(cols[4]);
-
-                    if (!setor || (previsto === 0 && autorizado === 0 && executado === 0)) return;
-
-                    if (!dadosOrcarAprov[setor]) {
-                        dadosOrcarAprov[setor] = { previsto: 0, autorizado: 0, executado: 0 };
-                    }
-                    dadosOrcarAprov[setor].previsto += previsto;
-                    dadosOrcarAprov[setor].autorizado += autorizado;
-                    dadosOrcarAprov[setor].executado += executado;
-                });
-
-                // Ordena os setores pelo % de execução (Executado / Autorizado), do maior para o menor
-                const sortedSetores = Object.keys(dadosOrcarAprov).sort((a, b) => {
-                    const pctA = dadosOrcarAprov[a].autorizado > 0 ? dadosOrcarAprov[a].executado / dadosOrcarAprov[a].autorizado : -1;
-                    const pctB = dadosOrcarAprov[b].autorizado > 0 ? dadosOrcarAprov[b].executado / dadosOrcarAprov[b].autorizado : -1;
-                    return pctB - pctA;
-                });
-
-                const previstoData = sortedSetores.map(s => dadosOrcarAprov[s].previsto);
-                const autorizadoData = sortedSetores.map(s => dadosOrcarAprov[s].autorizado);
-                const executadoData = sortedSetores.map(s => dadosOrcarAprov[s].executado);
-
-                // Métrica principal: % Executado sobre o Autorizado (é o valor realmente disponível)
-                const execPct = sortedSetores.map((s, idx) =>
-                    autorizadoData[idx] > 0 ? (executadoData[idx] / autorizadoData[idx]) * 100 : 0);
-
-                // Corte na aprovação: quanto o Autorizado ficou abaixo do Previsto (só sinaliza cortes reais, >1%)
-                const cortePct = sortedSetores.map((s, idx) =>
-                    previstoData[idx] > 0 ? ((autorizadoData[idx] - previstoData[idx]) / previstoData[idx]) * 100 : 0);
-
-                // Rótulos do eixo Y: nome do setor + aviso de corte quando existir
-                const labelsOrcarAprov = sortedSetores.map((s, idx) => {
-                    if (cortePct[idx] < -1) return `${s}  ⚠ ${cortePct[idx].toFixed(0)}%`;
-                    if (autorizadoData[idx] === 0 && previstoData[idx] > 0) return `${s}  ⚠ não autorizado`;
-                    return s;
-                });
-
-                // Cor de cada barra conforme o ritmo de execução (vermelho/dourado/verde/roxo se passou do autorizado)
-                function corExecucao(pct) {
-                    if (pct > 100) return '#a855f7';
-                    if (pct < 30) return '#ef4444';
-                    if (pct < 60) return '#f0a500';
-                    return '#22c55e';
-                }
-                const coresExecucao = execPct.map(corExecucao);
-
-                const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
-                if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
-
-                // Configura o container com rolagem (mesmo padrão do gráfico de % execução)
-                const canvasAprov = document.getElementById('chart-orcamento-aprovado');
-                const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
-                const alturaBaseAprov = 34; // uma única linha por setor, larguras idênticas
-                const alturaMinimaAprov = 260;
-                const alturaCalculadaAprov = Math.max(alturaMinimaAprov, labelsOrcarAprov.length * alturaBaseAprov);
-                innerAprov.style.height = alturaCalculadaAprov + 'px';
-                canvasAprov.style.width = '100%';
-
-                // Eixo X: 0 a 100% (com folga se algum setor executou acima do autorizado)
-                const maiorPct = Math.max(100, ...execPct);
-                const xMaxAprov = maiorPct > 100 ? Math.ceil((maiorPct + 15) / 10) * 10 : 100;
-
-                chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
-                    type: 'bar',
-                    data: {
-                        labels: labelsOrcarAprov,
-                        datasets: [
-                            {
-                                // Trilho de fundo: sempre 100% do Autorizado, cor neutra
-                                label: 'Autorizado (base)',
-                                data: sortedSetores.map(() => 100),
-                                backgroundColor: 'rgba(255,255,255,0.08)',
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barThickness: 20,
-                            },
-                            {
-                                // Barra de progresso: % Executado sobre o Autorizado
-                                label: 'Executado',
-                                data: execPct,
-                                backgroundColor: coresExecucao,
-                                borderRadius: 4,
-                                borderSkipped: false,
-                                barThickness: 20,
-                            }
-                        ]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false, axis: 'y' },
-                        datasets: {
-                            bar: { grouped: false }
-                        },
-                        plugins: {
-                            legend: { display: false }, // legenda customizada em HTML acima do gráfico
-                            tooltip: {
-                                callbacks: {
-                                    title: (items) => sortedSetores[items[0].dataIndex],
-                                    label: function (context) {
-                                        if (context.datasetIndex === 0) return null; // não mostra o trilho de fundo
-                                        const idx = context.dataIndex;
-                                        return `Executado: ${execPct[idx].toFixed(1)}% do autorizado (${fmt(executadoData[idx])} de ${fmt(autorizadoData[idx])})`;
-                                    },
-                                    afterBody: function (items) {
-                                        const idx = items[0].dataIndex;
-                                        const linhas = [`Previsto: ${fmt(previstoData[idx])}`];
-                                        const saldo = autorizadoData[idx] - executadoData[idx];
-                                        if (saldo >= 0) {
-                                            linhas.push(`Falta executar: ${fmt(saldo)} (${(100 - execPct[idx]).toFixed(1)}% do autorizado)`);
-                                        } else {
-                                            linhas.push(`Executou ${fmt(Math.abs(saldo))} acima do autorizado`);
-                                        //}
-                                        //if (cortePct[idx] < -1) {
-                                            //linhas.push(`Corte na aprovação: ${cortePct[idx].toFixed(1)}%`);
-                                        }
-                                        return linhas;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                min: 0,
-                                max: xMaxAprov,
-                                grid: gridStyle,
-                                ticks: {
-                                    color: tickColor,
-                                    callback: (value) => value + '%'
-                                }
-                            },
-                            y: {
-                                grid: gridStyle,
-                                ticks: {
-                                    color: (ctx) => {
-                                        const idx = ctx.index;
-                                        if (cortePct[idx] < -1 || (autorizadoData[idx] === 0 && previstoData[idx] > 0)) {
-                                            return '#f0a500';
-                                        }
-                                        return '#ffffff';
-                                    },
-                                    font: { size: 11 },
-                                    autoSkip: false
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Força o Chart.js a recalcular as posições com o tamanho final do contêiner,
-                // evitando desalinhamento entre o mouse e a linha do tooltip.
-                requestAnimationFrame(() => chartOrcamentoAprovado.resize());
+    const ctxED = document.getElementById('chart-orcamento-ed').getContext('2d');
+    if (chartOrcamentoED) chartOrcamentoED.destroy();
+    chartOrcamentoED = new Chart(ctxED, {
+        type: 'bar',
+        data: {
+            labels: sortedED.map(i => i[0]),
+            datasets: [{ label: 'Despesa Ajustada', data: sortedED.map(i => i[1]), backgroundColor: '#0077b6', borderRadius: 4 }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
+                y: { grid: gridStyle, ticks: { color: '#ffffff' } }
             }
+        }
+    });
+
+    // ===== GRÁFICO 2: % EXECUÇÃO POR SETOR =====
+    const dadosSetores = Object.keys(setores).map(setor => {
+        const s = setores[setor];
+        const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
+        return { setor, valor };
+    }).sort((a, b) => b.valor - a.valor);
+
+    const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
+    if (chartExecucaoSetor) chartExecucaoSetor.destroy();
+
+    const canvasExec = document.getElementById('chart-execucao-setor');
+    const innerExec = document.getElementById('chart-execucao-setor-inner');
+    innerExec.style.height = Math.max(250, dadosSetores.length * 42) + 'px';
+    canvasExec.style.width = '100%';
+
+    chartExecucaoSetor = new Chart(ctxExec, {
+        type: 'bar',
+        data: {
+            labels: dadosSetores.map(i => i.setor),
+            datasets: [{
+                label: '% Executado',
+                data: dadosSetores.map(i => i.valor),
+                backgroundColor: '#0099cc',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 },
+                y: { grid: gridStyle, ticks: { color: '#ffffff', autoSkip: false, font: { size: 11 } } }
+            }
+        }
+    });
+
+    // =========================================================================
+    // ===== NOVO GRÁFICO 3: EXECUÇÃO DO ORÇAMENTO APROVADO POR SETOR =====
+    // ===== (PREVISÃO X EMPENHO ACUMULADO ATÉ O MÊS CORRENTE)             =====
+    // =========================================================================
+
+    // Ordem cronológica dos meses
+    const ordemMeses = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+    
+    // DEFINA AQUI O MÊS LIMITE (Mude para 'AGOSTO' no próximo mês)
+    const mesAtual = 'JULHO';
+    const indexMesAtual = ordemMeses.indexOf(mesAtual);
+
+    const dadosOrcarAprov = {};
+
+    rowsOrcarAprov.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 5) return;
+
+        const setor = (cols[1] || '').trim().toUpperCase();
+        const mesLancamento = (cols[2] || '').trim().toUpperCase();
+        const previsto = limparNum(cols[3]);
+        const empenhado = limparNum(cols[4]);
+
+        if (!setor) return;
+
+        // Filtra acumulando apenas os meses menores ou iguais ao mês atual
+        const idxMes = ordemMeses.indexOf(mesLancamento);
+        if (idxMes !== -1 && idxMes <= indexMesAtual) {
+            if (!dadosOrcarAprov[setor]) {
+                dadosOrcarAprov[setor] = { previsto: 0, empenhado: 0 };
+            }
+            dadosOrcarAprov[setor].previsto += previsto;
+            dadosOrcarAprov[setor].empenhado += empenhado;
+        }
+    });
+
+    // Ordena os setores pelo volume Previsto
+    const listaSetoresAprov = Object.keys(dadosOrcarAprov).sort((a, b) => dadosOrcarAprov[b].previsto - dadosOrcarAprov[a].previsto);
+
+    const arrPrevisto = listaSetoresAprov.map(s => dadosOrcarAprov[s].previsto);
+    const arrEmpenhado = listaSetoresAprov.map(s => dadosOrcarAprov[s].empenhado);
+
+    const ctxOrcarAprov = document.getElementById('chart-orcamento-aprovado').getContext('2d');
+    if (chartOrcamentoAprovado) chartOrcamentoAprovado.destroy();
+
+    const canvasAprov = document.getElementById('chart-orcamento-aprovado');
+    const innerAprov = document.getElementById('chart-orcamento-aprovado-inner');
+    innerAprov.style.height = Math.max(260, listaSetoresAprov.length * 40) + 'px';
+    canvasAprov.style.width = '100%';
+
+    chartOrcamentoAprovado = new Chart(ctxOrcarAprov, {
+        type: 'bar',
+        data: {
+            labels: listaSetoresAprov,
+            datasets: [
+                {
+                    label: `Previsão Acumulada (Até ${mesAtual})`,
+                    data: arrPrevisto,
+                    backgroundColor: '#0077b6',
+                    borderRadius: 4,
+                    barPercentage: 0.8
+                },
+                {
+                    label: `Empenhado Acumulado (Até ${mesAtual})`,
+                    data: arrEmpenhado,
+                    backgroundColor: '#22c55e',
+                    borderRadius: 4,
+                    barPercentage: 0.8
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: '#e8edf5', font: { size: 12 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.dataset.label}: ${fmt(context.raw)}`;
+                        },
+                        afterBody: function (items) {
+                            const idx = items[0].dataIndex;
+                            const prev = arrPrevisto[idx];
+                            const emp = arrEmpenhado[idx];
+                            const pct = prev > 0 ? ((emp / prev) * 100).toFixed(1) : '0.0';
+                            return `\n% Executado da Previsão: ${pct}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: gridStyle,
+                    ticks: {
+                        color: tickColor,
+                        callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k'
+                    }
+                },
+                y: {
+                    grid: gridStyle,
+                    ticks: {
+                        color: '#ffffff',
+                        font: { size: 11 },
+                        autoSkip: false
+                    }
+                }
+            }
+        }
+    });
+
+    requestAnimationFrame(() => chartOrcamentoAprovado.resize());
+}
 
             // ============================================================
             // As funções renderKPIs, renderGraficos, renderDetalhamento,
