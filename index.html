@@ -1352,14 +1352,14 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
         grupo.items.forEach(item => {
             const leaf = document.createElement('div');
             leaf.className = 'tree-leaf';
-            const labelDespesa = item.ed ? `${item.despesa} (ED ${item.ed})` : item.despesa;
+
+            const labelDespesa = item.despesa;
 
             leaf.innerHTML = `
         <span class="tree-label" style="padding-left: 10px;">${labelDespesa}</span>
     ` + valoresOrcamentoHTML(item.prevInit, item.aprovDiret, item.despAjust, item.empenhado, item.liquidado, item.pago);
             despesasWrap.appendChild(leaf);
         });
-
         setorDetails.appendChild(despesasWrap);
         wrap.appendChild(setorDetails);
     });
