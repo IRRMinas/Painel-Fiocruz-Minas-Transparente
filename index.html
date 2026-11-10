@@ -1088,6 +1088,32 @@
                 </div>
                 <canvas id="chart-aporte-grupo-ano-desp" style="max-height: 340px;"></canvas>
             </div>
+
+            <!-- TABELA: Aporte Indireto - Módulos (Subunidade x Despesa) -->
+            <div class="chart-card" id="mod-card" style="margin-bottom: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+                    <h4>Aporte Indireto - Módulos (Subunidade X Despesa)</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" class="year-btn" id="mod-exp-xlsx">⬇ Exportar Excel</button>
+                        <button type="button" class="year-btn" id="mod-exp-csv">⬇ Exportar CSV</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+                    <label style="font-size:12px; color:var(--muted);">Ano:</label>
+                    <div class="year-filter" id="mod-anos" style="margin-bottom:0;"></div>
+                    <input type="text" id="mod-busca" class="search-input" placeholder="🔍 Buscar subunidade..." style="margin-left:auto;">
+                </div>
+                <div class="table-wrap">
+                    <div class="table-scroll" style="max-height:520px;">
+                        <table id="mod-tabela">
+                            <thead id="mod-thead"></thead>
+                            <tbody id="mod-tbody"></tbody>
+                            <tfoot id="mod-tfoot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+                <p id="mod-info" style="color:var(--muted); font-size:12px; margin-top:8px;"></p>
+            </div>
         </div>
 
         <div id="orcamento-aprovado" class="panel">
@@ -2075,6 +2101,126 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
                     options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => fmt(v) } } } }
                 });
             }
+
+            /* ===== TABELA MÓDULOS (Aporte Indireto: Subunidade x Despesa) ===== */
+            (function () {
+                const MOD_COLS = ['Gases para Pesquisa', 'Correios', 'Transporte Aéreo', 'Veículos com Motorista', 'Almoxarifado', 'Biotério', 'Plataforma', 'Total'];
+                // Linha: [ano, subunidade, gases, correios, transp, veiculos, almox, bioterio, plataforma, total]
+                const MOD_DATA = [[2019,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,0.0,24490.57,1140.8,37803.83,4040.0,0.0,67475.2],[2019,"Biologia Molecular e Imunologia da Malária - BMIM",68.31,0.0,14921.69,5433.31,60308.64,0.0,0.0,80731.95],[2019,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,0.0,0.0,53.04,0.0,7832.0,0.0,7885.04],[2019,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",0.0,0.0,0.0,24998.83,30662.91,1568.0,0.0,57229.74],[2019,"Entomologia Médica - EM",0.0,0.0,2453.59,7530.87,12618.99,2312.0,0.0,24915.45],[2019,"Genômica Funcional de Parasitos - GFP",1667.79,0.0,1242.49,244.8,66053.71,1344.0,0.0,70552.79],[2019,"Grupo de Estudos em Leishmanioses - GEL",0.0,0.0,3915.09,97970.88,51483.94,0.0,0.0,153369.91],[2019,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,0.0,0.0,12030.14,10445.0,0.0,0.0,22475.14],[2019,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",341.55,0.0,10935.24,5878.69,44700.28,0.0,0.0,61855.76],[2019,"Helmintologia e malacologia médica - HMM",68.31,0.0,385.32,10649.46,19074.99,832.0,0.0,31010.08],[2019,"Imunologia Celular e Molecular - ICM",409.86,0.0,4528.47,901.44,24308.47,2408.0,0.0,32556.24],[2019,"Imunologia de Doenças Virais - IDV",409.86,0.0,0.0,1774.58,64796.95,568.0,0.0,67549.39],[2019,"Imunopatologia - IP",409.86,0.0,13152.54,7198.3,65596.05,2392.0,0.0,88748.75],[2019,"Informática de Biossistemas - IB",0.0,0.0,374.76,0.0,673.72,0.0,0.0,1048.48],[2019,"Malária Experimental e Humana - MEH",1197.66,0.0,0.0,1738.59,14833.76,5168.0,0.0,22938.01],[2019,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",57.66,0.0,2470.53,148.89,18670.19,624.0,0.0,21971.27],[2019,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,0.0,0.0,6045.71,2739.77,0.0,0.0,8785.48],[2019,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,0.0,0.0,3480.58,29209.77,256.0,0.0,32946.35],[2019,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,3474.55,410.16,0.0,0.0,3884.71],[2019,"Química de Produtos Naturais Bioativos - QPNB",68.31,0.0,1069.5,1309.17,24542.77,0.0,0.0,26989.75],[2019,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,0.0,0.0,16869.09,7279.3,192.0,0.0,24340.39],[2019,"Triatomíneos - TRIATO",0.0,0.0,468.45,1097.87,17530.23,7280.0,0.0,26376.55],[2020,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,0.0,11746.92,41190.57,20810.29,3760.0,0.0,77507.78],[2020,"Biologia Molecular e Imunologia da Malária - BMIM",129.95,320.62,6346.94,1012.17,25444.89,0.0,100.82,33355.39],[2020,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,0.0,0.0,311.46,6016.48,2160.0,0.0,8487.94],[2020,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",389.85,18.32,0.0,16262.73,27706.1,3944.0,35.0,48356.0],[2020,"Entomologia Médica - EM",0.0,0.0,1591.69,1134.86,4227.31,1328.0,0.0,8281.86],[2020,"Genômica Funcional de Parasitos - GFP",492.06,0.0,0.0,75.78,45576.7,880.0,67.2,47091.74],[2020,"Grupo de Estudos em Leishmanioses - GEL",519.8,415.07,0.0,12896.75,24100.5,48.0,0.0,37980.12],[2020,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,0.0,0.0,25.26,270.34,0.0,0.0,295.6],[2020,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",519.5,248.69,6603.93,13633.08,24895.61,2256.0,0.0,48156.81],[2020,"Helmintologia e malacologia médica - HMM",129.95,0.0,1511.58,369.94,8523.57,432.0,0.0,10967.04],[2020,"Imunologia Celular e Molecular - ICM",129.95,0.0,4873.7,7703.78,16503.42,152.0,0.0,29362.85],[2020,"Imunologia de Doenças Virais - IDV",779.7,84.36,601.35,4811.69,104360.69,1792.0,0.0,112429.79],[2020,"Imunopatologia - IP",519.75,0.0,5716.45,10040.88,78502.6,7304.0,0.0,102083.68],[2020,"Informática de Biossistemas - IB",0.0,34.08,0.0,740.05,1042.84,0.0,0.0,1816.97],[2020,"Malária Experimental e Humana - MEH",129.95,0.0,0.0,109.46,6152.85,952.0,220.96,7565.22],[2020,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",25.42,432.68,14921.19,584.58,25484.78,120.0,0.0,41568.65],[2020,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,0.0,0.0,8194.46,671.6,0.0,0.0,8866.06],[2020,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,0.0,757.04,20422.05,20810.29,5408.0,0.0,47397.38],[2020,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,74.7,29.7,0.0,0.0,104.4],[2020,"Química de Produtos Naturais Bioativos - QPNB",0.0,0.0,0.0,262.98,8428.43,0.0,562.74,9254.15],[2020,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,49.55,833.81,50011.56,8484.66,272.0,0.0,59651.58],[2020,"Triatomíneos - TRIATO",0.0,127.77,870.27,1677.98,6269.96,4336.0,0.04,13282.02],[2021,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,0.0,375.42,41190.57,27583.36,576.0,4467.76,74193.11],[2021,"Biologia Molecular e Imunologia da Malária - BMIM",281.29,0.0,5978.55,1012.17,33175.08,0.0,5500.08,45947.17],[2021,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",0.0,0.0,0.0,0.0,1848.81,3504.0,1804.48,7157.29],[2021,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,0.0,0.0,311.46,9551.52,3936.0,1867.8,15666.78],[2021,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",1016.6,835.53,4596.39,0.0,49453.74,5292.0,1029.0,62223.26],[2021,"Entomologia Médica - EM",430.98,1831.43,2712.86,0.0,12894.55,2448.0,0.0,20317.82],[2021,"Genômica Funcional de Parasitos - GFP",1600.41,1762.86,862.05,0.0,80193.74,216.0,3639.63,88274.69],[2021,"Grupo de Estudos em Leishmanioses - GEL",0.0,356.02,1614.76,12896.75,23022.06,0.0,2895.0,40784.59],[2021,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",583.97,3790.19,23263.62,13633.08,85642.18,0.0,18694.58,145607.62],[2021,"Helmintologia e malacologia médica - HMM",129.95,1881.97,757.44,369.94,11543.48,720.0,700.52,16103.3],[2021,"Imunologia Celular e Molecular - ICM",735.31,158.02,4851.42,7703.78,21437.78,1368.0,4161.32,40415.63],[2021,"Imunologia de Doenças Virais - IDV",865.26,55.9,2380.23,4811.69,107064.96,9084.0,11751.9,136013.94],[2021,"Imunopatologia - IP",886.65,123.36,3221.52,10040.88,123033.57,26700.0,13703.3,177709.28],[2021,"Informática de Biossistemas - IB",76.29,0.0,750.88,0.0,9857.86,0.0,1759.87,12444.9],[2021,"Malária Experimental e Humana - MEH",2369.4,0.0,0.0,109.46,1695.68,0.0,0.0,4174.54],[2021,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",25.42,733.52,4164.18,584.58,13876.07,3192.0,64.2,22639.97],[2021,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,202.51,0.0,8194.46,509.05,0.0,0.0,8906.02],[2021,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,721.52,1389.27,20422.05,20868.47,2724.0,0.0,46125.31],[2021,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,74.7,80.7,0.0,0.0,155.4],[2021,"Química de Produtos Naturais Bioativos - QPNB",108.27,0.0,388.62,0.0,14935.51,0.0,1846.4,17278.8],[2021,"Saúde, Educação e Cidadania - SEC",0.0,0.0,0.0,0.0,43.92,0.0,0.0,43.92],[2021,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,0.0,374.1,50011.56,19455.8,792.0,0.0,70633.46],[2021,"Triatomíneos - TRIATO",0.0,588.51,0.0,1677.98,8913.42,6300.0,1312.16,18792.07],[2021,"Violências, Gênero e Saúde - VGS",0.0,0.0,0.0,0.0,46.53,0.0,0.0,46.53],[2022,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,31.23,601.05,17057.7,19510.42,1008.0,14612.75,52821.15],[2022,"Biologia Molecular e Imunologia da Malária - BMIM",151.34,7617.14,5978.01,1585.79,47141.59,0.0,28414.14,90888.01],[2022,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",0.0,0.0,364.38,27767.05,16171.42,6300.0,6343.56,56946.41],[2022,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,0.0,0.0,247.44,13200.63,3240.0,2244.5,18932.57],[2022,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",638.02,531.49,4810.5,31673.38,24762.29,10464.0,2417.81,75297.49],[2022,"Entomologia Médica - EM",319.01,31.23,587.85,200.04,22227.42,3588.0,4801.78,31755.33],[2022,"Genômica Funcional de Parasitos - GFP",0.0,133.56,1130.76,492.09,94870.36,240.0,23940.74,120807.51],[2022,"Grupo de Estudos em Leishmanioses - GEL",0.0,116.78,1560.66,30274.63,39061.77,0.0,15672.8,86686.64],[2022,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,63.8,0.0,0.0,123.88,0.0,0.0,187.68],[2022,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",957.03,4285.37,22598.69,6778.2,62314.66,0.0,67118.09,164052.04],[2022,"Helmintologia e malacologia médica - HMM",0.0,0.0,727.44,2068.32,0.0,0.0,2038.35,4834.11],[2022,"Imunologia Celular e Molecular - ICM",957.03,216.62,2140.26,1144.24,46325.63,1704.0,18649.12,71136.9],[2022,"Imunologia de Doenças Virais - IDV",789.36,0.0,1363.41,9412.26,119993.76,6852.0,47383.58,185794.37],[2022,"Imunopatologia - IP",789.37,95.03,9845.82,13895.88,117857.28,36312.0,45420.86,224216.24],[2022,"Informática de Biossistemas - IB",20.26,0.0,737.34,2079.61,11734.97,0.0,5348.21,19920.39],[2022,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",5.65,5821.52,1252.44,2263.91,29037.09,2700.0,5738.89,46819.5],[2022,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,124.96,0.0,1766.57,331.66,0.0,0.0,2223.19],[2022,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",151.34,825.07,363.72,32435.16,17614.42,3324.0,256.0,54969.71],[2022,"Políticas de Saúde e Proteção Social - PSPS",0.0,63.8,0.0,0.0,111.91,0.0,0.0,175.71],[2022,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,31.23,0.0,0.0,311.99,0.0,0.0,343.22],[2022,"Química de Produtos Naturais Bioativos - QPNB",108.27,344.65,1763.37,253.55,27631.15,0.0,4870.93,34971.92],[2022,"Saúde, Educação e Cidadania - SEC",0.0,38.55,0.0,10135.47,543.1,0.0,0.0,10717.12],[2022,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,21.5,380.0,85248.75,27162.64,552.0,1592.88,114957.77],[2022,"Triatomíneos - TRIATO",0.0,210.58,1696.95,21911.17,16173.95,9036.0,27372.98,76401.63],[2022,"Violências, Gênero e Saúde - VGS",0.0,151.04,0.0,5083.81,251.85,0.0,0.0,5486.7],[2023,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,490.8,363.72,285.52,18995.62,720.0,38002.12,58857.78],[2023,"Biologia Molecular e Imunologia da Malária - BMIM",0.0,10027.08,9394.48,178.12,50405.92,0.0,32383.84,102389.44],[2023,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",0.0,0.0,790.32,11036.73,15079.42,0.0,2572.56,29479.03],[2023,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,0.0,0.0,0.0,5329.12,1980.0,587.6,7896.72],[2023,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",376.42,236.42,1443.99,42481.87,23431.35,4872.0,3515.4,76357.45],[2023,"Entomologia Médica - EM",208.75,137.1,0.0,0.0,29873.7,5376.0,22852.54,58448.09],[2023,"Genômica Funcional de Parasitos - GFP",1680.28,166.84,0.0,2052.45,113001.19,2652.0,13549.86,133102.62],[2023,"Grupo de Estudos em Leishmanioses - GEL",0.0,472.35,1464.78,46151.34,54733.71,600.0,11370.0,114792.18],[2023,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,0.0,0.0,163.2,68.77,0.0,0.0,231.97],[2023,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",752.84,4787.38,20105.42,20103.79,48623.11,864.0,39815.28,135051.82],[2023,"Helmintologia e malacologia médica - HMM",0.0,265.86,1852.37,1736.82,33278.96,3168.0,23100.3,63402.31],[2023,"Imunologia Celular e Molecular - ICM",961.59,308.73,0.0,1370.1,38326.89,1104.0,30486.4,72557.71],[2023,"Imunologia de Doenças Virais - IDV",585.17,0.0,0.0,3924.33,71885.81,2832.0,26110.24,105337.55],[2023,"Imunopatologia - IP",3488.07,258.42,4825.21,26881.09,122005.86,32832.0,21973.78,212264.43],[2023,"Informática de Biossistemas - IB",0.0,65.84,735.69,186.55,10280.89,0.0,28589.67,39858.64],[2023,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",40.5,4701.19,4839.96,4037.12,77075.4,1836.0,13446.61,105976.78],[2023,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,3046.54,0.0,296.69,591.83,0.0,0.0,3935.06],[2023,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,517.66,2217.51,13184.08,16634.96,3180.0,1427.55,37161.76],[2023,"Políticas de Saúde e Proteção Social - PSPS",0.0,0.0,0.0,0.0,14.49,0.0,0.0,14.49],[2023,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,41.4,0.0,574.52,637.21,0.0,0.0,1253.13],[2023,"Química de Produtos Naturais Bioativos - QPNB",452.67,71.23,3773.7,453.01,18281.99,0.0,8649.11,31681.71],[2023,"Saúde, Educação e Cidadania - SEC",0.0,130.53,0.0,27815.66,1080.68,0.0,0.0,29026.87],[2023,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,34.61,0.0,125893.78,43561.08,1272.0,0.0,170761.47],[2023,"Triatomíneos - TRIATO",0.0,436.09,737.34,11637.85,15577.4,9360.0,6872.83,44621.51],[2023,"Violências, Gênero e Saúde - VGS",0.0,43.64,0.0,16089.97,1466.06,0.0,0.0,17599.67],[2024,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",858.21,3217.4,580.0,140.65,28022.29,492.0,39587.01,72897.56],[2024,"Biologia Molecular e Imunologia da Malária - BMIM",208.75,1562.81,10888.0,2338.92,25789.23,0.0,25707.98,66495.69],[2024,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",175.05,329.99,0.0,8325.34,45068.06,1032.0,7113.47,62043.91],[2024,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,25.86,0.0,72.02,18477.29,4260.0,1132.88,23968.05],[2024,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",208.75,1294.72,803.92,56539.09,15146.57,1200.0,5689.6,80882.65],[2024,"Entomologia Médica - EM",417.5,0.0,0.0,0.0,20475.38,4416.0,1041.4,26350.28],[2024,"Genômica Funcional de Parasitos - GFP",1020.1,77.11,2819.81,380.39,95853.86,3540.0,30853.99,134545.26],[2024,"Grupo de Estudos em Leishmanioses - GEL",0.0,302.65,607.0,6948.46,32534.83,204.0,7755.0,48351.94],[2024,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,0.0,0.0,0.0,218.05,0.0,0.0,218.05],[2024,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",718.8,2182.04,7932.0,40417.53,72374.94,2892.0,49863.15,176380.46],[2024,"Helmintologia e malacologia médica - HMM",208.75,1345.49,0.0,1699.66,28428.34,1440.0,7278.87,40401.11],[2024,"Imunologia Celular e Molecular - ICM",1437.6,1445.92,1715.8,3817.49,71620.67,516.0,50872.89,131426.37],[2024,"Imunologia de Doenças Virais - IDV",1020.1,0.0,0.0,1775.5,64686.16,72.0,22911.61,90465.37],[2024,"Imunopatologia - IP",1704.45,199.33,903.22,27386.81,132661.95,30768.0,40722.68,234346.44],[2024,"Informática de Biossistemas - IB",0.0,117.87,0.0,2110.48,30046.12,1632.0,15307.6,49214.07],[2024,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",229.0,8186.34,1045.98,17553.22,41862.7,912.0,17848.09,87637.33],[2024,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,189.35,0.0,6654.17,353.15,0.0,0.0,7196.67],[2024,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,476.97,1228.0,29174.29,31500.08,3564.0,8083.89,74027.23],[2024,"Políticas de Saúde e Proteção Social - PSPS",0.0,330.72,0.0,0.0,104.79,0.0,0.0,435.51],[2024,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,234.69,334.32,0.0,0.0,569.01],[2024,"Química de Produtos Naturais Bioativos - QPNB",0.0,2836.37,3896.2,1687.59,20382.39,0.0,36659.82,65462.37],[2024,"Saúde, Educação e Cidadania - SEC",0.0,571.54,0.0,21071.15,1109.67,0.0,0.0,22752.36],[2024,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,25.86,0.0,102336.07,17992.95,1704.0,411.5,122470.38],[2024,"Triatomíneos - TRIATO",0.0,338.67,1780.0,10244.9,14964.33,24960.0,25657.5,77945.4],[2024,"Violências, Gênero e Saúde - VGS",0.0,0.0,0.0,574.78,312.82,0.0,0.0,887.6],[2025,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",0.0,896.73,3628.0,27132.99,17517.31,1680.0,53737.85,104592.88],[2025,"Biologia Molecular e Imunologia da Malária - BMIM",328.67,987.33,1903.52,559.77,25566.42,0.0,22365.07,51710.78],[2025,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",175.05,27.67,410.0,1405.66,46858.41,1740.0,9261.72,59878.51],[2025,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,66.91,425.0,839.6,22685.33,5040.0,8221.6,37278.44],[2025,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",479.32,478.1,2320.0,52894.98,10531.38,0.0,6001.07,72704.85],[2025,"Entomologia Médica - EM",0.0,725.85,680.0,0.0,19346.94,1500.0,1455.92,23708.71],[2025,"Genômica Funcional de Parasitos - GFP",1081.92,82.44,1251.0,8638.93,67798.2,11940.0,12427.19,103219.68],[2025,"Grupo de Estudos em Leishmanioses - GEL",0.0,277.46,1568.0,19539.74,28345.95,708.0,34530.0,84969.15],[2025,"Grupo de Estudos Transdisciplinares em Tecnologias em Saúde e Ambiente - GETESA",0.0,2058.34,0.0,724.35,143.86,0.0,0.0,2926.55],[2025,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",178.02,1825.6,5828.67,11545.53,50919.63,816.0,27551.64,98665.09],[2025,"Helmintologia e malacologia médica - HMM",0.0,1542.18,3450.37,26878.01,22722.08,2448.0,22204.1,79244.74],[2025,"Imunologia Celular e Molecular - ICM",1643.35,63.68,410.0,3227.92,74346.56,1260.0,23926.77,104878.28],[2025,"Imunologia de Doenças Virais - IDV",958.64,0.0,1350.0,200.09,38530.31,0.0,35613.07,76652.11],[2025,"Imunopatologia - IP",2128.87,0.0,739.39,28921.98,89651.29,28512.0,27553.31,177506.84],[2025,"Informática de Biossistemas - IB",29.48,83.01,402.5,1455.17,26861.75,0.0,12723.25,41555.16],[2025,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",69.66,897.21,6742.22,15805.1,34720.41,2832.0,23799.82,84866.42],[2025,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,11417.11,1614.0,1926.92,512.64,0.0,13167.0,28637.67],[2025,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,782.09,601.0,8049.4,18911.44,2592.0,2141.36,33077.29],[2025,"Políticas de Saúde e Proteção Social - PSPS",0.0,3955.41,0.0,139.51,115.27,0.0,0.0,4210.19],[2025,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,36305.65,464.18,0.0,493.36,37263.19],[2025,"Química de Produtos Naturais Bioativos - QPNB",970.91,464.47,1163.7,4717.86,8735.29,0.0,106161.98,122214.21],[2025,"Saúde, Educação e Cidadania - SEC",0.0,350.54,0.0,19693.64,386.51,0.0,0.0,20430.69],[2025,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,0.0,0.0,112936.03,26778.61,1812.0,1225.78,142752.42],[2025,"Triatomíneos - TRIATO",0.0,689.69,2591.0,36578.99,23366.63,28740.0,15056.1,107022.41],[2025,"Violências, Gênero e Saúde - VGS",0.0,886.57,0.0,167.09,333.95,0.0,0.0,1387.61],[2026,"Biologia e Imunologia de Doenças Infecciosas e Parasitárias - BIP",633.33,0.0,580.0,4384.53,12546.43,0.0,20219.13,38363.42],[2026,"Biologia Molecular e Imunologia da Malária - BMIM",0.0,147.72,2988.0,0.0,8605.72,0.0,19022.56,30764.0],[2026,"Biotecnologia Aplicada ao Estudo de Patógenos - BAP",0.0,0.0,0.0,256.22,25029.69,1728.0,19091.67,46105.58],[2026,"Comportamento de Vetores e Interação com Patógenos - CVIP",0.0,27.67,510.0,81.29,10025.43,2760.0,2976.62,16381.01],[2026,"Diagnóstico e Terapia de Doenças Infecciosas e Câncer - DATA",356.04,0.0,1996.22,18530.55,12600.5,0.0,1990.85,35474.16],[2026,"Entomologia Médica - EM",0.0,0.0,0.0,0.0,8958.94,888.0,720.0,10566.94],[2026,"Genômica Funcional de Parasitos - GFP",0.0,58.11,1133.6,941.92,41370.74,5352.0,17839.05,66695.42],[2026,"Grupo de Estudos em Leishmanioses - GEL",0.0,126.07,0.0,30568.48,14328.26,0.0,5994.0,51016.81],[2026,"Grupo Integrado de Pesquisas em Biomarcadores - GIPB",178.02,1468.21,17559.73,14252.0,26636.46,252.0,39366.25,99712.67],[2026,"Helmintologia e malacologia médica - HMM",0.0,2491.07,0.0,6125.14,10501.76,0.0,3621.8,22739.77],[2026,"Imunologia Celular e Molecular - ICM",534.06,84.4,0.0,1420.68,36834.04,1620.0,20511.37,61004.55],[2026,"Imunologia de Doenças Virais - IDV",0.0,0.0,1575.18,856.2,30616.25,0.0,43640.3,76687.93],[2026,"Imunopatologia - IP",2857.21,263.32,0.0,18798.54,49415.22,14712.0,43095.54,129141.83],[2026,"Informática de Biossistemas - IB",0.0,27.67,0.0,264.98,8693.69,0.0,16439.04,25425.38],[2026,"Mosquitos Vetores: Endossimbiontes e Interação Patógeno-Vetor - MV",0.0,164.48,2834.93,9015.91,16048.27,1236.0,6474.21,35773.8],[2026,"Núcleo de Estudos em Saúde Pública e Envelhecimento - NESPE",0.0,225.95,1486.96,5080.69,248.08,0.0,0.0,7041.68],[2026,"Pesquisa Clínica e Políticas Públicas em Doenças Infecto-Parasitárias - PCPP",0.0,116.78,410.0,7722.15,10117.41,2580.0,3945.76,24892.1],[2026,"Políticas Públicas e Direitos Humanos em Saúde e Saneamento - PPDH",0.0,0.0,0.0,15905.72,185.75,0.0,0.0,16091.47],[2026,"Química de Produtos Naturais Bioativos - QPNB",0.0,155.39,0.0,844.56,5708.39,0.0,112201.97,118910.31],[2026,"Saúde, Educação e Cidadania - SEC",0.0,286.07,0.0,25075.38,561.73,0.0,0.0,25923.18],[2026,"Taxonomia de flebotomíneos/Epidemiologia, diagnóstico e controle das leishmanioses - TFL",0.0,0.0,0.0,42700.43,10224.76,912.0,879.2,54716.39],[2026,"Triatomíneos - TRIATO",0.0,895.63,1010.0,3658.53,11674.97,19560.0,21008.68,57807.81],[2026,"Violências, Gênero e Saúde - VGS",0.0,0.0,0.0,181.62,161.72,0.0,0.0,343.34],[2026,"Políticas de Saúde e Proteção Social - PSPS",0.0,37.69,0.0,0.0,6.08,0.0,0.0,43.77]];
+
+                const anosDisp = [...new Set(MOD_DATA.map(r => r[0]))].sort();
+                let anosSel = new Set(); // vazio = todos
+                let termo = '';
+                let sortCol = null, sortDir = 1;
+
+                const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                const rotuloAno = a => a === 2026 ? '2026 (em andamento)' : String(a);
+
+                function filtrar() {
+                    let r = MOD_DATA.filter(x => (anosSel.size === 0 || anosSel.has(x[0])) &&
+                        (!termo || norm(x[1]).includes(termo)));
+                    if (sortCol !== null) {
+                        r = r.slice().sort((a, b) => {
+                            const va = a[sortCol], vb = b[sortCol];
+                            return (typeof va === 'string' ? va.localeCompare(vb, 'pt-BR') : va - vb) * sortDir;
+                        });
+                    }
+                    return r;
+                }
+
+                function renderFiltros() {
+                    const wrap = document.getElementById('mod-anos');
+                    let h = `<button type="button" class="year-btn ${anosSel.size === 0 ? 'active' : ''}" data-ano="all">Todos</button>`;
+                    anosDisp.forEach(a => {
+                        h += `<button type="button" class="year-btn ${anosSel.has(a) ? 'active' : ''}" data-ano="${a}">${rotuloAno(a)}</button>`;
+                    });
+                    wrap.innerHTML = h;
+                    wrap.querySelectorAll('.year-btn').forEach(b => b.addEventListener('click', () => {
+                        if (b.dataset.ano === 'all') anosSel.clear();
+                        else {
+                            const a = Number(b.dataset.ano);
+                            anosSel.has(a) ? anosSel.delete(a) : anosSel.add(a);
+                        }
+                        renderFiltros(); renderTabela();
+                    }));
+                }
+
+                function renderTabela() {
+                    const heads = ['Ano', 'Subunidade', ...MOD_COLS];
+                    document.getElementById('mod-thead').innerHTML = '<tr>' + heads.map((h, i) =>
+                        `<th data-i="${i}" class="${sortCol === i ? 'sorted' : ''}" style="${i >= 2 ? 'text-align:right;' : ''}">${h}<span class="sort-icon">${sortCol === i ? (sortDir === 1 ? '▲' : '▼') : '↕'}</span></th>`
+                    ).join('') + '</tr>';
+                    document.querySelectorAll('#mod-thead th').forEach(th => th.addEventListener('click', () => {
+                        const i = Number(th.dataset.i);
+                        if (sortCol === i) sortDir = -sortDir; else { sortCol = i; sortDir = 1; }
+                        renderTabela();
+                    }));
+
+                    const r = filtrar();
+                    const tot = new Array(8).fill(0);
+                    document.getElementById('mod-tbody').innerHTML = r.map(x => {
+                        for (let k = 0; k < 8; k++) tot[k] += x[k + 2];
+                        return `<tr><td>${x[0]}</td><td>${x[1]}</td>` +
+                            x.slice(2).map(v => `<td class="num-cell">${fmt(v)}</td>`).join('') + '</tr>';
+                    }).join('') || `<tr><td colspan="10" style="text-align:center; color:var(--muted);">Nenhum registro encontrado.</td></tr>`;
+
+                    document.getElementById('mod-tfoot').innerHTML = r.length ?
+                        `<tr style="font-weight:700; background:rgba(0,194,224,.08);"><td colspan="2">TOTAL</td>` +
+                        tot.map(v => `<td class="num-cell">${fmt(v)}</td>`).join('') + '</tr>' : '';
+                    document.getElementById('mod-info').textContent =
+                        `${r.length} registro(s) exibido(s) · Anos: ${anosSel.size ? [...anosSel].sort().join(', ') : 'todos'}`;
+                }
+
+                /* ----- Exportação (respeita ano/busca/ordenação) ----- */
+                function nomeArquivo(ext) {
+                    const a = anosSel.size ? [...anosSel].sort().join('-') : 'todos-os-anos';
+                    return `aporte_indireto_modulos_${a}.${ext}`;
+                }
+                function baixar(blob, nome) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = nome;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 1500);
+                }
+                function exportarCSV() {
+                    const esc = s => '"' + String(s).replace(/"/g, '""') + '"';
+                    const linhas = [['Ano', 'Subunidade', ...MOD_COLS].map(esc).join(';')];
+                    filtrar().forEach(x => linhas.push([x[0], esc(x[1]),
+                        ...x.slice(2).map(v => v.toFixed(2).replace('.', ','))].join(';')));
+                    baixar(new Blob(['\uFEFF' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' }), nomeArquivo('csv'));
+                }
+                function carregarXLSX() {
+                    return new Promise((ok, erro) => {
+                        if (window.XLSX) return ok();
+                        const s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+                        s.onload = ok; s.onerror = erro;
+                        document.head.appendChild(s);
+                    });
+                }
+                async function exportarXLSX() {
+                    try { await carregarXLSX(); } catch (e) {
+                        alert('Não foi possível carregar o módulo de Excel. Exportando em CSV.');
+                        return exportarCSV();
+                    }
+                    const aoa = [['Ano', 'Subunidade', ...MOD_COLS], ...filtrar()];
+                    const ws = XLSX.utils.aoa_to_sheet(aoa);
+                    ws['!cols'] = [{ wch: 8 }, { wch: 70 }, ...MOD_COLS.map(() => ({ wch: 20 }))];
+                    for (let R = 1; R < aoa.length; R++) for (let C = 2; C < 10; C++) {
+                        const c = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                        if (c) c.z = '"R$" #,##0.00';
+                    }
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Modulos');
+                    XLSX.writeFile(wb, nomeArquivo('xlsx'));
+                }
+
+                document.getElementById('mod-exp-csv').addEventListener('click', exportarCSV);
+                document.getElementById('mod-exp-xlsx').addEventListener('click', exportarXLSX);
+                document.getElementById('mod-busca').addEventListener('input', e => { termo = norm(e.target.value.trim()); renderTabela(); });
+                renderFiltros(); renderTabela();
+            })();
         </script>
 </body>
 
