@@ -433,6 +433,14 @@
             border-bottom: none;
         }
 
+        /* texto legível em todas as tabelas (Aporte Indireto estava com texto escuro) */
+        table, tbody td, tfoot td { color: #ffffff; }
+        tfoot td { padding: 9px 14px; border-top: 2px solid var(--border); }
+        .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+        .table-scroll::-webkit-scrollbar-thumb { background: var(--accent2, #0077b6); border-radius: 4px; }
+        .table-scroll { scrollbar-color: #0077b6 rgba(255,255,255,.04); }
+
         .num-cell {
             text-align: right;
             font-variant-numeric: tabular-nums;
@@ -1345,7 +1353,7 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
 
         if (ed) {
             const labelED = "ED " + ed;
-            dadosED[labelED] = (dadosED[labelED] || 0) + despAjust;
+            dadosED[labelED] = (dadosED[labelED] || 0) + empenhado;
         }
     });
 
@@ -1409,13 +1417,16 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
         type: 'bar',
         data: {
             labels: sortedED.map(i => i[0]),
-            datasets: [{ label: 'Despesa Ajustada', data: sortedED.map(i => i[1]), backgroundColor: '#0077b6', borderRadius: 4 }]
+            datasets: [{ label: 'Empenhado', data: sortedED.map(i => i[1]), backgroundColor: '#0077b6', borderRadius: 4 }]
         },
         options: {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: c => `Empenhado: ${fmt(c.raw)}` } }
+            },
             scales: {
                 x: { grid: gridStyle, ticks: { color: tickColor, callback: v => 'R$ ' + (v / 1e3).toFixed(0) + 'k' } },
                 y: { grid: gridStyle, ticks: { color: '#ffffff' } }
@@ -1427,8 +1438,9 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
     const dadosSetores = Object.keys(setores).map(setor => {
         const s = setores[setor];
         const valor = s.totAjust === 0 ? 0 : parseFloat(((s.totEmp / s.totAjust) * 100).toFixed(2));
-        return { setor, valor };
-    }).sort((a, b) => b.valor - a.valor);
+        return { setor, valor, emp: s.totEmp, prev: s.totAjust };
+    }).filter(d => d.prev > 0)   // setor sem previsão não tem % (divisão por zero)
+      .sort((a, b) => b.valor - a.valor);
 
     const ctxExec = document.getElementById('chart-execucao-setor').getContext('2d');
     if (chartExecucaoSetor) chartExecucaoSetor.destroy();
@@ -1445,7 +1457,7 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
             datasets: [{
                 label: '% Executado',
                 data: dadosSetores.map(i => i.valor),
-                backgroundColor: '#0099cc',
+                backgroundColor: ctx => (ctx.raw > 100 ? '#ef4444' : '#0099cc'),   // vermelho = estourou a previsão
                 borderRadius: 4
             }]
         },
@@ -1453,7 +1465,16 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: {
+                    label: c => `% Executado: ${c.raw.toFixed(1).replace('.', ',')}%`,
+                    afterLabel: c => {
+                        const d = dadosSetores[c.dataIndex];
+                        return [`Empenhado: ${fmt(d.emp)}`, `Previsão atualizada: ${fmt(d.prev)}`];
+                    }
+                } }
+            },
             scales: {
                 x: { grid: gridStyle, ticks: { color: tickColor, callback: v => v + '%' }, max: 100 },
                 y: { grid: gridStyle, ticks: { color: '#ffffff', autoSkip: false, font: { size: 11 } } }
@@ -1468,10 +1489,31 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
 
     // Ordem cronológica dos meses
     const ordemMeses = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-    
-    // DEFINA AQUI O MÊS LIMITE (Mude para 'AGOSTO' no próximo mês)
-    const mesAtual = 'AGOSTO';
-    const indexMesAtual = ordemMeses.indexOf(mesAtual);
+    const normMes = t => (t || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // ---------- CONFIGURAÇÃO ----------
+    // Como tratar a coluna "Previsão" (que se repete em cada linha/mês da despesa):
+    //   'SOMAR'     -> soma a previsão de cada mês lançado até o mês limite (regra da gerência)
+    //   'UNICO'     -> conta a previsão uma única vez por despesa (valor anual fixo)
+    //   'DUODECIMO' -> previsão anual / 12 x meses decorridos
+    const MODO_PREVISAO = 'SOMAR';
+    // Mês limite: null = automático (último mês que existe na planilha). Ou fixe, ex.: 'AGOSTO'
+    const MES_LIMITE_MANUAL = null;
+    // -----------------------------------
+
+    let idxMaxPlanilha = -1;
+    rowsOrcarAprov.forEach((cols, i) => {
+        if (i === 0 || !cols || cols.length < 5) return;
+        idxMaxPlanilha = Math.max(idxMaxPlanilha, ordemMeses.indexOf(normMes(cols[2])));
+    });
+    const indexMesAtual = MES_LIMITE_MANUAL ? ordemMeses.indexOf(MES_LIMITE_MANUAL) : idxMaxPlanilha;
+    const mesAtual = ordemMeses[indexMesAtual] || '';
+
+    const rotuloPrevisao = {
+        SOMAR: `Previsão acumulada (soma mensal até ${mesAtual})`,
+        UNICO: 'Previsão anual (valor único)',
+        DUODECIMO: `Previsão proporcional (1/12 por mês até ${mesAtual})`
+    }[MODO_PREVISAO];
 
     const dadosOrcarAprov = {};
     const previsaoVista = {};
@@ -1480,30 +1522,27 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
         if (i === 0 || !cols || cols.length < 5) return;
 
         const setor = (cols[1] || '').trim().toUpperCase();
-        const mesLancamento = (cols[2] || '').trim().toUpperCase();
+        const despesaNome = (cols[0] || '').trim().toUpperCase();
+        const idxMes = ordemMeses.indexOf(normMes(cols[2]));
         const previsto = limparNum(cols[3]);
         const empenhado = limparNum(cols[4]);
 
         if (!setor) return;
+        if (!dadosOrcarAprov[setor]) dadosOrcarAprov[setor] = { previsto: 0, empenhado: 0 };
 
-        if (!dadosOrcarAprov[setor]) {
-            dadosOrcarAprov[setor] = { previsto: 0, empenhado: 0 };
+        // Previsão
+        if (MODO_PREVISAO === 'SOMAR') {
+            if (idxMes !== -1 && idxMes <= indexMesAtual) dadosOrcarAprov[setor].previsto += previsto;
+        } else {
+            const chave = setor + '||' + despesaNome;
+            if (!previsaoVista[chave]) {
+                previsaoVista[chave] = true;
+                dadosOrcarAprov[setor].previsto += MODO_PREVISAO === 'UNICO' ? previsto : (previsto / 12) * (indexMesAtual + 1);
+            }
         }
 
-        // PREVISÃO: o valor se repete em todos os meses da mesma despesa, pois é único.
-        // Por isso NÃO soma: pega apenas um valor por Setor + Despesa.
-        const despesaNome = (cols[0] || '').trim().toUpperCase();
-        const chavePrev = setor + '||' + despesaNome;
-        if (!previsaoVista[chavePrev]) {
-            previsaoVista[chavePrev] = true;
-            dadosOrcarAprov[setor].previsto += previsto;
-        }
-
-        // EMPENHADO: soma mês a mês, apenas até o mês atual
-        const idxMes = ordemMeses.indexOf(mesLancamento);
-        if (idxMes !== -1 && idxMes <= indexMesAtual) {
-            dadosOrcarAprov[setor].empenhado += empenhado;
-        }
+        // Empenhado: soma mês a mês até o mês limite
+        if (idxMes !== -1 && idxMes <= indexMesAtual) dadosOrcarAprov[setor].empenhado += empenhado;
     });
 
     // Ordena os setores pelo volume Previsto
@@ -1526,7 +1565,7 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
             labels: listaSetoresAprov,
             datasets: [
                 {
-                    label: `Previsão (valor único)`,
+                    label: rotuloPrevisao,
                     data: arrPrevisto,
                     backgroundColor: '#0077b6',
                     borderRadius: 4,
