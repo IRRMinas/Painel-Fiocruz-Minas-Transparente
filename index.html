@@ -847,7 +847,14 @@
 
         <div class="tabs">
             <button class="tab active" data-tab="visao">📊 Plano Anual / Visão Geral / LOA IRR</button>
-            <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button>
+            <!-- ============================================================
+                 ABA "PLANO ANUAL — DETALHAMENTO" OCULTA TEMPORARIAMENTE (12/11/2026)
+                 Para reativar: remova apenas as marcas de comentário HTML que envolvem o botão logo abaixo.
+                 O painel (div id="detalhamento"), as funções renderDetalhamento/
+                 parseDetalhamento/renderKPIsDetalhamento e a leitura da aba "proposta_1"
+                 (GIDS.prop) foram MANTIDOS no código, apenas sem botão para acessá-los.
+                 ============================================================ -->
+            <!-- <button class="tab" data-tab="detalhamento">📋 Plano Anual — Detalhamento</button> -->
             <button class="tab" data-tab="aporte">🔬 Aporte Indireto à Pesquisa</button>
             <button class="tab" data-tab="orcamento-aprovado">💰 Orçamento Aprovado</button>
         </div>
@@ -1467,6 +1474,7 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
     const indexMesAtual = ordemMeses.indexOf(mesAtual);
 
     const dadosOrcarAprov = {};
+    const previsaoVista = {};
 
     rowsOrcarAprov.forEach((cols, i) => {
         if (i === 0 || !cols || cols.length < 5) return;
@@ -1478,13 +1486,22 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
 
         if (!setor) return;
 
-        // Filtra acumulando apenas os meses menores ou iguais ao mês atual
+        if (!dadosOrcarAprov[setor]) {
+            dadosOrcarAprov[setor] = { previsto: 0, empenhado: 0 };
+        }
+
+        // PREVISÃO: o valor se repete em todos os meses da mesma despesa, pois é único.
+        // Por isso NÃO soma: pega apenas um valor por Setor + Despesa.
+        const despesaNome = (cols[0] || '').trim().toUpperCase();
+        const chavePrev = setor + '||' + despesaNome;
+        if (!previsaoVista[chavePrev]) {
+            previsaoVista[chavePrev] = true;
+            dadosOrcarAprov[setor].previsto += previsto;
+        }
+
+        // EMPENHADO: soma mês a mês, apenas até o mês atual
         const idxMes = ordemMeses.indexOf(mesLancamento);
         if (idxMes !== -1 && idxMes <= indexMesAtual) {
-            if (!dadosOrcarAprov[setor]) {
-                dadosOrcarAprov[setor] = { previsto: 0, empenhado: 0 };
-            }
-            dadosOrcarAprov[setor].previsto += previsto;
             dadosOrcarAprov[setor].empenhado += empenhado;
         }
     });
@@ -1509,7 +1526,7 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
             labels: listaSetoresAprov,
             datasets: [
                 {
-                    label: `Previsão Acumulada (Até ${mesAtual})`,
+                    label: `Previsão (valor único)`,
                     data: arrPrevisto,
                     backgroundColor: '#0077b6',
                     borderRadius: 4,
