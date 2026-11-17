@@ -1185,7 +1185,14 @@
             </div>
 
             <!-- NOVO GRÁFICO: Orçamento Aprovado por Setor — barra de progresso (% Executado do Autorizado) -->
-            <div class="chart-card" style="margin-bottom: 24px;">
+            <!-- ============================================================
+                 GRÁFICO TEMPORARIAMENTE OCULTO PARA A REUNIÃO (NÃO EXCLUÍDO)
+                 Motivo: dados divergentes entre as abas "orçar-aprov" e "Executado" (planilha será corrigida).
+                 PARA REATIVAR: remover "display: none;" do style da div abaixo
+                 (ou apagar o atributo style="display: none;" inteiro e voltar ao margin-bottom: 24px).
+                 O JavaScript (renderOrcamentoAprovado) continua intacto e rodando normalmente.
+                 ============================================================ -->
+            <div class="chart-card" style="display: none; margin-bottom: 24px;">
                 <h4>Execução do Orçamento Aprovado por Setor</h4>
                 <p style="color: var(--muted); font-size: 12px; margin: -6px 0 14px 0;">
                 </p>
