@@ -257,6 +257,15 @@
             background: var(--green);
         }
 
+        .kpi-card.pago::before {
+            background: #a78bfa;
+        }
+
+        /* Grade da Visão Geral com 4 colunas de valores (Liberado, Empenhado, Liquidado, Despesas pagas) */
+        .kpi-grid.kpi-grid-4 {
+            grid-template-columns: 180px repeat(4, 1fr);
+        }
+
         .kpi-card.total-row {
             background: linear-gradient(135deg, #0f2444, #162e52);
             border-color: var(--accent);
@@ -758,6 +767,10 @@
                 grid-template-columns: 110px repeat(3, 1fr);
             }
 
+            .kpi-grid.kpi-grid-4 {
+                grid-template-columns: 110px repeat(4, 1fr);
+            }
+
             .charts-row {
                 grid-template-columns: 1fr;
             }
@@ -870,7 +883,7 @@
         <div id="visao" class="panel active">
             <div class="panel-title">2026</div>
 
-            <div class="kpi-grid">
+            <div class="kpi-grid kpi-grid-4">
                 <div></div>
                 <div class="kpi-col-header"
                     data-tooltip="O Liberado é o orçamento autorizado pela Coordenação Geral de Planejamento da Fiocruz/Cogeplan e já descentralizado para o IRR.">
@@ -881,6 +894,10 @@
                 <div class="kpi-col-header"
                     data-tooltip="A Liquidação é quando se verifica que o governo recebeu aquilo que comprou.">
                     Liquidado<br>
+                </div>
+                <div class="kpi-col-header"
+                    data-tooltip="A Despesa paga é a etapa final: o pagamento efetivo ao fornecedor, depois da liquidação.">
+                    Despesas pagas<br>
                 </div>
 
                 <div class="kpi-row-label"
@@ -898,6 +915,10 @@
                     <div class="kpi-label">Liquidado</div>
                     <div id="cust-liq">–</div>
                 </div>
+                <div class="kpi-card pago">
+                    <div class="kpi-label">Despesas pagas</div>
+                    <div id="cust-pag">–</div>
+                </div>
 
                 <div class="kpi-row-label"
                     data-tooltip="Despesas de Capital: despesas que contribuem, diretamente, para a formação ou aquisição de um bem de capital.">
@@ -914,6 +935,10 @@
                     <div class="kpi-label">Liquidado</div>
                     <div id="cap-liq">–</div>
                 </div>
+                <div class="kpi-card pago">
+                    <div class="kpi-label">Despesas pagas</div>
+                    <div id="cap-pag">–</div>
+                </div>
 
                 <div class="kpi-row-label total">Total Geral</div>
                 <div class="kpi-card total-row liberado">
@@ -927,6 +952,10 @@
                 <div class="kpi-card total-row liquidado">
                     <div class="kpi-label">Liquidado</div>
                     <div id="tot-liq">–</div>
+                </div>
+                <div class="kpi-card total-row pago">
+                    <div class="kpi-label">Despesas pagas</div>
+                    <div id="tot-pag">–</div>
                 </div>
             </div>
 
@@ -1295,6 +1324,7 @@
                     ]);
 
                     renderKPIs(csvPainel);
+                    renderDespesasPagas(csvProp);
                     renderGraficos(csvPainel);
                     renderDetalhamento(csvProp);
                     renderAporteIndireto(csvPainel);
@@ -1669,6 +1699,34 @@ function renderOrcamentoAprovado(rowsRenomear, rowsOrcarAprov) {
                 map['tot-liq'] = map['cust-liq'] + map['cap-liq'];
 
                 Object.entries(map).forEach(([id, val]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = fmt(val);
+                });
+            }
+
+            /* ===== PANEL 1 — DESPESAS PAGAS (aba proposta_1, coluna O) ===== */
+            // Elementos de despesa (ED) classificados como Capital (GND 4 - Investimentos).
+            // Qualquer outro ED é tratado como Custeio. Ajuste aqui se necessário.
+            const ED_CAPITAL = [51, 52];
+
+            function renderDespesasPagas(rows) {
+                let custeio = 0, capital = 0;
+
+                rows.forEach((cols, i) => {
+                    if (i === 0 || !cols || cols.length < 15) return;   // coluna O = índice 14
+                    const grupo = (cols[1] || '').trim();
+                    const area = (cols[10] || '').trim();
+                    if (!grupo && !area) return;                         // ignora linhas vazias/quebras do cabeçalho
+
+                    const ed = parseInt(String(cols[8] || '').replace(/\.0$/, ''), 10);
+                    const pago = limparNum(cols[14]);                    // O = Despesas pagas
+
+                    if (ED_CAPITAL.includes(ed)) capital += pago;
+                    else custeio += pago;
+                });
+
+                const vals = { 'cust-pag': custeio, 'cap-pag': capital, 'tot-pag': custeio + capital };
+                Object.entries(vals).forEach(([id, val]) => {
                     const el = document.getElementById(id);
                     if (el) el.textContent = fmt(val);
                 });
